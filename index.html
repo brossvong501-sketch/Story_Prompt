@@ -1,6 +1,23 @@
 <!doctype html>
 <html lang="km">
   <head>
+    <meta name="build-state" data-is-raw="true" />
+    <script>
+      (function () {
+        // If served from raw GitHub Pages repository root, redirect to compiled /docs/
+        var isGitHub = window.location.hostname.indexOf('github.io') !== -1;
+        var metaTag = document.querySelector('meta[name="build-state"]');
+        var isRawSourceHtml = metaTag && metaTag.getAttribute('data-is-raw') === 'true';
+        if (isGitHub && isRawSourceHtml) {
+          var p = window.location.pathname;
+          if (p.indexOf('/docs') === -1 && p.indexOf('/dist') === -1) {
+            var base = p.endsWith('/') ? p : p + '/';
+            window.location.replace(base + 'docs/' + window.location.search + window.location.hash);
+            return;
+          }
+        }
+      })();
+    </script>
     <script>
       (function () {
         // AI Studio Environment: HMR WebSocket is disabled in iframe.

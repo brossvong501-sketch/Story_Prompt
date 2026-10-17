@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="km">
+  <head>
+    <meta name="build-state" data-is-raw="false" />
+    <script>
+      (function () {
+        // If served from raw GitHub Pages repository root, redirect to compiled /docs/
+        var isGitHub = window.location.hostname.indexOf('github.io') !== -1;
+        var metaTag = document.querySelector('meta[name="build-state"]');
+        var isRawSourceHtml = metaTag && metaTag.getAttribute('data-is-raw') === 'true';
+        if (isGitHub && isRawSourceHtml) {
+          var p = window.location.pathname;
+          if (p.indexOf('/docs') === -1 && p.indexOf('/dist') === -1) {
+            var base = p.endsWith('/') ? p : p + '/';
+            window.location.replace(base + 'docs/' + window.location.search + window.location.hash);
+            return;
+          }
+        }
+      })();
+    </script>
+    <script>
+      (function () {
+        // AI Studio Environment: HMR WebSocket is disabled in iframe.
+        // Intercept Vite HMR WebSockets so @vite/client connects without throwing errors.
+        var OrigWebSocket = window.WebSocket;
+        function ViteMockWebSocket(url, protocols) {
+          var protoStr = Array.isArray(protocols) ? protocols.join(',') : (protocols || '');
+          var urlStr = String(url || '');
+          if (
+            protoStr.indexOf('vite') !== -1 ||
+            urlStr.indexOf('vite') !== -1 ||
+            (urlStr.indexOf('token=') !== -1 && (urlStr.indexOf('vite') !== -1 || urlStr.indexOf('localhost') !== -1 || urlStr.indexOf('127.0.0.1') !== -1))
+          ) {
+            var listeners = {};
+            var wsObj = {
+              readyState: 1, // WebSocket.OPEN
+              OPEN: 1,
+              CLOSED: 3,
+              CLOSING: 2,
+              CONNECTING: 0,
+              url: urlStr,
+              protocol: Array.isArray(protocols) ? (protocols[0] || '') : (protocols || ''),
+              bufferedAmount: 0,
+              extensions: '',
+              binaryType: 'blob',
+              addEventListener: function (type, listener) {
+                if (!listeners[type]) listeners[type] = [];
+                listeners[type].push(listener);
+                if (type === 'open') {
+                  setTimeout(function () {
+                    if (typeof listener === 'function') {
+                      listener({ type: 'open', target: wsObj });
+                    }
+                  }, 0);
+                }
+              },
+              removeEventListener: function (type, listener) {
+                if (listeners[type]) {
+                  listeners[type] = listeners[type].filter(function (fn) { return fn !== listener; });
+                }
+              },
+              dispatchEvent: function () { return true; },
+              send: function () {},
+              close: function () {
+                wsObj.readyState = 3;
+              }
+            };
+            return wsObj;
+          }
+          return OrigWebSocket ? new OrigWebSocket(url, protocols) : {};
+        }
+
+        if (OrigWebSocket) {
+          ViteMockWebSocket.prototype = OrigWebSocket.prototype;
+          ViteMockWebSocket.OPEN = 1;
+          ViteMockWebSocket.CLOSED = 3;
+          ViteMockWebSocket.CLOSING = 2;
+          ViteMockWebSocket.CONNECTING = 0;
+          window.WebSocket = ViteMockWebSocket;
+        }
+
+        // Suppress WebSocket errors in unhandledrejection and window.onerror
+        function isViteWsError(err) {
+          if (!err) return false;
+          var str = (err.message || '') + ' ' + (err.stack || '') + ' ' + String(err);
+          return str.indexOf('WebSocket') !== -1 || str.indexOf('@vite/client') !== -1 || str.indexOf('vite-hmr') !== -1;
+        }
+
+        window.addEventListener('unhandledrejection', function (e) {
+          if (e && isViteWsError(e.reason)) {
+            e.preventDefault();
+            e.stopImmediatePropagation && e.stopImmediatePropagation();
+          }
+        }, true);
+
+        window.addEventListener('error', function (e) {
+          if (e && (isViteWsError(e.error) || (e.message && e.message.indexOf('WebSocket') !== -1) || (e.filename && e.filename.indexOf('@vite/client') !== -1))) {
+            e.preventDefault();
+            e.stopImmediatePropagation && e.stopImmediatePropagation();
+            return true;
+          }
+        }, true);
+
+        // Filter console.error for vite websocket connection logs
+        var origConsoleError = console.error;
+        console.error = function () {
+          var args = Array.prototype.slice.call(arguments);
+          var joined = args.map(function (a) { return String(a || ''); }).join(' ');
+          if (joined.indexOf('[vite] failed to connect to websocket') !== -1 || joined.indexOf('WebSocket closed without opened') !== -1) {
+            return;
+          }
+          origConsoleError.apply(console, args);
+        };
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>កម្មវិធីបង្កើតសាច់រឿង - បង្កើតដោយ ឡោម មនីវង្ស (LORM MONYVONG)</title>
+    <meta name="description" content="កម្មវិធីសរសេរ prompt ជាសាច់រឿងភាគបន្តបន្ទាប់គ្នាដោយមិនដាច់សាច់រឿង និងរក្សាតួអង្គដដែល បង្កើតដោយ ឡោម មនីវង្ស (LORM MONYVONG)" />
+    <meta property="og:title" content="កម្មវិធីបង្កើតសាច់រឿង - បង្កើតដោយ ឡោម មនីវង្ស (LORM MONYVONG)" />
+    <meta property="og:description" content="កម្មវិធីសរសេរ prompt ជាសាច់រឿងភាគបន្តបន្ទាប់គ្នាដោយមិនដាច់សាច់រឿង និងរក្សាតួអង្គដដែល បង្កើតដោយ ឡោម មនីវង្ស (LORM MONYVONG)" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Angkor&family=Battambang:wght@400;700&family=Bayon&family=Bokor&family=Chenla&family=Content:wght@400;700&family=Dangrek&family=Fasthand&family=Hanuman:wght@400;700&family=Kantumruy+Pro:ital,wght@0,300..700;1,300..700&family=Kdam+Thmor+Pro:wght@400;700&family=Koh+Santepheap:wght@400;700&family=Koulen&family=Moul&family=Moulpali&family=Nokora:wght@400;700&family=Odor+Mean+Chey&family=Preahvihear&family=Siemreap&family=Suwannaphum:wght@400;700&family=Taprom&display=swap" rel="stylesheet">
+    <script type="module" crossorigin src="./assets/index-BNS1XO85.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-CZdK1tz0.css">
+  </head>
+  <body class="font-['Battambang',sans-serif] bg-slate-50 antialiased selection:bg-blue-600 selection:text-white">
+    <div id="root"></div>
+  </body>
+</html>
+
