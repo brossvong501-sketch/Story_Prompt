@@ -1,0 +1,6 @@
+{
+  "name": "កម្មវិធីបង្កើតសាច់រឿង",
+  "description": "កម្មវិធីសរសេរ prompt ជាសាច់រឿងភាគបន្តបន្ទាប់គ្នាដោយមិនដាច់សាច់រឿង និងរក្សាតួអង្គដដែល បង្កើតដោយ ឡោម មនីវង្ស (LORM MONYVONG)",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

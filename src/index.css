@@ -1,0 +1,301 @@
+@import "tailwindcss";
+
+/* ========================================== */
+/* DYNAMIC HEADING & BODY FONT SYSTEM         */
+/* ========================================== */
+@font-face {
+  font-family: 'Kh Ang MoulHand 2';
+  src: local('Kh Ang MoulHand 2'),
+       local('Kh Ang MoulHand2'),
+       local('Kh-Ang-MoulHand-2'),
+       local('Kh Ang MoulHand'),
+       local('Ang MoulHand 2'),
+       local('Ang MoulHand'),
+       local('Kh Ang Moul Hand 2'),
+       local('Kh Ang Moul Hand'),
+       local('Kh Ang MuraHand 2'),
+       local('Kh Ang MuraHand');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Kh Ang MoulHand';
+  src: local('Kh Ang MoulHand'),
+       local('Kh Ang MoulHand 2'),
+       local('Ang MoulHand'),
+       local('Ang MoulHand 2'),
+       local('Kh Ang Moul Hand'),
+       local('Kh Ang MuraHand 2'),
+       local('Kh Ang MuraHand');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Kh Ang MuraHand 2';
+  src: local('Kh Ang MoulHand 2'),
+       local('Kh Ang MoulHand'),
+       local('Kh Ang MuraHand 2'),
+       local('Kh Ang MuraHand');
+  font-display: swap;
+}
+
+:root {
+  --heading-font: 'Moul', cursive;
+  --body-font: 'Battambang', sans-serif;
+  --app-font-color: #ffffff;
+}
+
+html {
+  transition: font-size 0.2s ease;
+}
+
+html[data-font-size="small"] {
+  font-size: 13.5px !important;
+}
+
+html[data-font-size="normal"] {
+  font-size: 16px !important;
+}
+
+html[data-font-size="large"] {
+  font-size: 18.5px !important;
+}
+
+html[data-font-size="xlarge"] {
+  font-size: 21px !important;
+}
+
+h1, h2, h3, h4, .font-heading, .font-heading * {
+  font-family: var(--heading-font, 'Moul', cursive) !important;
+  letter-spacing: 0.02em;
+}
+
+/* Explicitly lock the 3 circled areas to strictly follow Heading Font only */
+.nav-tab-item,
+.nav-tab-item *,
+.btn-generate-action,
+.btn-generate-action *,
+.app-footer-bar,
+.app-footer-bar * {
+  font-family: var(--heading-font, 'Moul', cursive) !important;
+}
+
+body, p, input, textarea, select, .font-body {
+  font-family: var(--body-font, 'Battambang', sans-serif);
+}
+
+/* ========================================== */
+/* LICENSE SETTINGS CARD (Dark Purple Theme)  */
+/* ========================================== */
+.license-settings-card {
+  margin-top: 1rem;
+  padding: 1.1rem;
+  background: #1e1035;
+  border: 1px solid rgba(124, 58, 237, 0.35);
+  border-radius: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  font-family: var(--body-font, 'Battambang', system-ui, -apple-system, sans-serif);
+  color: #f3e8ff;
+  transition: all 0.25s ease;
+}
+
+.license-settings-card:hover {
+  border-color: rgba(124, 58, 237, 0.7);
+}
+
+.license-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.license-title-box {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.license-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.license-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+.license-subtitle {
+  font-size: 0.72rem;
+  color: #c4b5fd;
+  margin: 0.15rem 0 0 0;
+  opacity: 0.85;
+}
+
+/* Status Badges */
+.license-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+.badge-inactive {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.badge-active {
+  background: rgba(16, 185, 129, 0.18);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.45);
+}
+
+/* Detail Box */
+.license-details-box {
+  background: rgba(13, 6, 24, 0.55);
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  border-radius: 0.75rem;
+  padding: 0.6rem 0.85rem;
+  margin-bottom: 0.85rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.license-detail-item {
+  font-size: 0.75rem;
+  display: flex;
+  gap: 0.35rem;
+}
+
+.detail-label {
+  color: #a78bfa;
+}
+
+.detail-value {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.detail-value.text-accent {
+  color: #38bdf8;
+}
+
+/* Input & Button */
+.license-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.license-input-wrapper {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.license-input {
+  flex: 1;
+  background: #120824;
+  border: 1px solid rgba(107, 33, 168, 0.6);
+  border-radius: 0.75rem;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.82rem;
+  color: #ffffff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.5px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.license-input:focus {
+  border-color: #a855f7;
+  box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.25);
+  background: #170b2e;
+}
+
+.license-input::placeholder {
+  color: rgba(124, 58, 237, 0.45);
+}
+
+.license-btn-activate {
+  background: linear-gradient(135deg, #7c3aed, #9333ea);
+  color: #ffffff;
+  border: none;
+  border-radius: 0.75rem;
+  padding: 0.55rem 1.1rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.35);
+}
+
+.license-btn-activate:hover {
+  background: linear-gradient(135deg, #6d28d9, #7e22ce);
+  transform: translateY(-1px);
+}
+
+.license-btn-activate:active {
+  transform: translateY(0);
+}
+
+.license-btn-activate:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.license-btn-remove {
+  background: transparent;
+  color: #f87171;
+  border: none;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-end;
+  text-decoration: underline;
+  padding: 0.2rem 0.4rem;
+  opacity: 0.8;
+}
+
+.license-btn-remove:hover {
+  opacity: 1;
+}
+
+/* Feedback Messages */
+.license-message {
+  margin-top: 0.6rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.6rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  animation: fadeIn 0.25s ease;
+}
+
+.license-message.msg-success {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.license-message.msg-error {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
