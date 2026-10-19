@@ -32,7 +32,7 @@ try {
 }
 
 const app = express();
-const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+const PORT = 3000;
 
 app.use(express.json());
 
@@ -264,6 +264,10 @@ You are a world-class AI video prompt director, screenwriter, and dialogue speci
 Your mission is to generate a sequential series of AI video prompts for advanced video generation models (Kling AI, Runway Gen-3 Alpha, Sora, Midjourney, Pika, Luma Dream Machine).
 
 MANDATORY RULES FOR STORY & CONTEXTUAL DIALOGUE GENERATION:
+
+0. HANDS-FREE BASELINE & 100% VISUAL IDENTITY CONSISTENCY:
+   - HANDS-FREE DEFAULT: Characters' hands MUST BE NATURAL AND EMPTY by default (hands free, not holding clapperboard, tablet, or props) UNLESS the narrative action of this specific scene explicitly dictates that they hold or interact with a particular object!
+   - STRICT 100% FACE & APPEARANCE CONSISTENCY: Strictly preserve 100% identical facial features, face shape, eye shape, hairstyle, skin tone, and clothing across every single scene.
 
 1. REMOVE ALL HARDCODED / CANNED FALLBACK DIALOGUES:
    - FORBIDDEN to use cliché generic phrases (e.g., NEVER write "Don't give up", "កុំអស់សង្ឃឹម", or identical repetitive lines).

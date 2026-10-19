@@ -506,6 +506,57 @@ const CHARACTER_TYPES: CharacterTypeItem[] = [
     description: 'ស្ដេចឬមេដឹកនាំដ៏មហិមា ស្លៀកពាក់ព្រះពស្ត្រក្បាច់ក្បូរមាសភ្លឺចិញ្ចែងចិញ្ចាច ពាក់មកុដរាជវង្ស ទឹកមុខមហិមា ពោរពេញដោយអំណាចនិងព្រះគុណ (Photorealistic majestic royal king / sovereign leader, ornate royal gold robes, magnificent crown, regal commanding posture, majestic palace lighting, 8k)។',
     defaultStyle: 'Cinematic 8K Royal Epic, majestic warm lighting, opulent golden glow'
   },
+  // តួអង្គរឿងស៊ុនអ៊ូខុង មនុស្សពិត (Journey to the West - Live-Action / Realistic)
+  {
+    id: 'human_journey_west_group_realistic',
+    categoryId: 'human',
+    categoryTitle: 'មនុស្ស (Human)',
+    name: 'ក្រុមស៊ុនអ៊ូខុង មនុស្សពិត (Journey to the West - Live-Action)',
+    badge: 'មនុស្ស • Journey to West Live-Action',
+    emoji: '⛩️',
+    description: 'A cinematic live-action movie still of the four characters from Journey to the West standing together on a majestic mountain cliff with a dramatic foggy mountain and temple background. From left to right: Tang Sanzang, a handsome young monk wearing intricate traditional red and gold silk robes and holding an ornate staff; Sun Wukong, a fierce and heroic warrior with subtle monkey-like facial features, wearing battle-worn red and gold Chinese armor and holding a heavy golden staff; Zhu Bajie, a robust warrior with subtle wild boar features in rugged blue armor holding a combat rake; and Sha Wujing, a tall, muscular warrior with stylized blue-toned skin, a beard, and a skull bead necklace, holding a weapon. Epic cinematic lighting, ultra-realistic textures, photorealistic, 8k resolution.',
+    defaultStyle: 'Cinematic live-action film, 35mm anamorphic lens, epic atmospheric mountain fog, authentic silk and metal textures, 8k'
+  },
+  {
+    id: 'human_sun_wukong_realistic',
+    categoryId: 'human',
+    categoryTitle: 'មនុស្ស (Human)',
+    name: 'ស៊ុនអ៊ូខុង មនុស្សពិត (Sun Wukong - Realistic Live-Action)',
+    badge: 'មនុស្ស • Sun Wukong Realistic',
+    emoji: '🐒⚔️',
+    description: 'Sun Wukong in cinematic live-action movie style: a fierce and heroic warrior with subtle monkey-like facial features, authentic fine facial fur and intense piercing golden eyes, wearing battle-worn red and gold Chinese armor with dragon pauldrons, holding a heavy golden staff (Ruyi Jingu Bang), dramatic wind-blown hair and red scarf, standing on a misty cliff peak, photorealistic film still, 8k.',
+    defaultStyle: 'Cinematic 8K Realistic Film, authentic weathered Chinese armor, dramatic rim light, 35mm film grain'
+  },
+  {
+    id: 'human_tang_sanzang_realistic',
+    categoryId: 'human',
+    categoryTitle: 'មនុស្ស (Human)',
+    name: 'ព្រះថាំងចេង មនុស្សពិត (Tang Sanzang - Realistic Live-Action)',
+    badge: 'មនុស្ស • Tang Sanzang Realistic',
+    emoji: '📿👑',
+    description: 'Tang Sanzang in cinematic live-action movie style: a handsome young monk wearing intricate traditional red and gold embroidered silk robes, an ornate golden five-Buddha crown, holding a heavy brass Buddhist Khakkhara staff, serene and disciplined expression, standing on misty mountain heights with ancient temples behind, photorealistic film still, 8k.',
+    defaultStyle: 'Cinematic 8K Realistic Film, authentic traditional silk embroidery, golden crown, serene atmospheric lighting'
+  },
+  {
+    id: 'human_zhu_bajie_realistic',
+    categoryId: 'human',
+    categoryTitle: 'មនុស្ស (Human)',
+    name: 'ជ្រូកប៉ាចេ មនុស្សពិត (Zhu Bajie - Realistic Live-Action)',
+    badge: 'មនុស្ស • Zhu Bajie Realistic',
+    emoji: '🐗🛡️',
+    description: 'Zhu Bajie in cinematic live-action movie style: a robust, broad-shouldered warrior with subtle wild boar prosthetic features and tusks, wearing rugged battle-tested blue lamellar armor, holding a heavy nine-toothed combat rake, gritty warrior presence, weathered skin and fabric textures, photorealistic film still, 8k.',
+    defaultStyle: 'Cinematic 8K Realistic Film, rugged weathered blue armor, realistic prosthetic details, dramatic lighting'
+  },
+  {
+    id: 'human_sha_wujing_realistic',
+    categoryId: 'human',
+    categoryTitle: 'មនុស្ស (Human)',
+    name: 'សារអ៊ូជិញ មនុស្សពិត (Sha Wujing - Realistic Live-Action)',
+    badge: 'មនុស្ស • Sha Wujing Realistic',
+    emoji: '🌊💀',
+    description: 'Sha Wujing in cinematic live-action movie style: a tall, muscular warrior with stylized blue-toned skin, a dark weathered beard, wearing a heavy necklace of polished skull prayer beads, rugged martial robes, holding a crescent-bladed shovel staff, imposing guardian gaze, photorealistic film still, 8k.',
+    defaultStyle: 'Cinematic 8K Realistic Film, blue-toned skin, authentic bone necklace, dramatic mountain atmosphere'
+  },
   // កំពូលវីរបុរសភាពយន្តមនុស្សពិត (Realistic Superheroes)
   {
     id: 'human_superman_realistic',
@@ -773,6 +824,86 @@ const CHARACTER_TYPES: CharacterTypeItem[] = [
   },
 
   // 4. តុក្កតា & 3D (Toys, Chibi & 3D Objects)
+  {
+    id: 'toy_leo_3d',
+    categoryId: 'toys_3d',
+    categoryTitle: 'តុក្កតា & 3D (Toys, Chibi & 3D Objects)',
+    name: 'Leo - យុវជន 3D (Leo 3D Animated Boy)',
+    badge: 'តុក្កតា 3D • Leo',
+    emoji: '👦',
+    description: 'Character description: Leo is a teenage boy with a friendly and energetic appearance, featuring messy dark hair, expressive brown eyes, and a warm smile. He wears a black t-shirt underneath a blue denim jacket with the sleeves rolled up. Hands naturally free and empty by default. 3D animated movie style (Disney / Pixar 3D animation, soft natural lighting, 8k render).',
+    defaultStyle: '3D animated movie style, Disney Pixar 3D animation, soft natural daylight, 8k render'
+  },
+  {
+    id: 'toy_maya_3d',
+    categoryId: 'toys_3d',
+    categoryTitle: 'តុក្កតា & 3D (Toys, Chibi & 3D Objects)',
+    name: 'Maya - យុវតី 3D (Maya 3D Animated Girl)',
+    badge: 'តុក្កតា 3D • Maya',
+    emoji: '👧',
+    description: 'Character description: Maya is a charming teenage girl with long, wavy brown hair, expressive bright eyes, and a sweet, curious expression with subtle freckles. She is wearing a vibrant, colorful tie-dye hoodie with light green drawstrings. Hands naturally free and empty by default. 3D animated movie style (Disney / Pixar 3D animation, soft natural lighting, 8k render).',
+    defaultStyle: '3D animated movie style, Disney Pixar 3D animation, vibrant colors, soft depth of field, 8k render'
+  },
+  {
+    id: 'toy_leo_maya_duo_3d',
+    categoryId: 'toys_3d',
+    categoryTitle: 'តុក្កតា & 3D (Toys, Chibi & 3D Objects)',
+    name: 'Leo & Maya - គូយុវវ័យ 3D (Leo & Maya 3D Duo)',
+    badge: 'តុក្កតា 3D • Leo & Maya Duo',
+    emoji: '👫',
+    description: 'Character description: Leo is a teenage boy with a friendly and energetic appearance, featuring messy dark hair, expressive brown eyes, and a warm smile. He wears a black t-shirt underneath a blue denim jacket with the sleeves rolled up. Maya is a charming teenage girl with long, wavy brown hair, expressive bright eyes, and a sweet, curious expression. She is wearing a vibrant, colorful tie-dye hoodie with light green drawstrings. Hands naturally free and empty by default unless the story specifies holding an object. 3D animated movie style (Disney / Pixar 3D animation, strict 100% character face and clothing consistency across all scenes, 8k render).',
+    defaultStyle: '3D animated movie style, Disney Pixar 3D animation, natural outdoor cobblestone path, soft daylight, 8k render'
+  },
+  {
+    id: 'toy_journey_west_group_3d',
+    categoryId: 'toys_3d',
+    categoryTitle: 'តុក្កតា & 3D (Toys, Chibi & 3D Objects)',
+    name: 'ក្រុមស៊ុនអ៊ូខុង 3D (Journey to the West - 4 Main Characters 3D)',
+    badge: 'តុក្កតា 3D • Journey to West Group',
+    emoji: '🏮',
+    description: 'A cinematic 3D animated movie style group shot of the four main characters from Journey to the West standing triumphantly on a rocky mountain peak overlooking a misty mountain landscape with ancient temples. From left to right: Tang Sanzang, a young and handsome monk in ornate red and yellow robes holding a golden staff; Sun Wukong, the heroic monkey king in vibrant red and gold armor holding his glowing magical golden staff; Zhu Bajie, a cheerful and plump pig demon character in blue-green armor holding a rake; and Sha Wujing, a tall, muscular warrior with blue skin and a necklace of skulls holding a shovel staff. Vibrant cinematic lighting, Pixar and Disney aesthetic, 8k resolution, highly detailed.',
+    defaultStyle: 'Cinematic 3D animated movie style, Pixar and Disney aesthetic, vibrant cinematic lighting, misty mountains with ancient temples, 8k'
+  },
+  {
+    id: 'toy_sun_wukong_3d',
+    categoryId: 'toys_3d',
+    categoryTitle: 'តុក្កតា & 3D (Toys, Chibi & 3D Objects)',
+    name: 'ស៊ុនអ៊ូខុង 3D (Sun Wukong 3D - Monkey King)',
+    badge: 'តុក្កតា 3D • Sun Wukong',
+    emoji: '🐒👑',
+    description: 'Sun Wukong, the heroic Monkey King in 3D animated movie style: wearing vibrant red and gold dragon-patterned Chinese warrior armor, golden circlet fillet headband, expressive spirited golden eyes, holding his glowing magical golden staff (Ruyi Jingu Bang), standing with agile heroic posture on mountain cliff, Pixar and Disney aesthetic, volumetric lighting, 8k resolution, highly detailed.',
+    defaultStyle: 'Cinematic 3D animation style, Disney Pixar aesthetic, vibrant red and gold armor, glowing magical staff aura, 8k'
+  },
+  {
+    id: 'toy_tang_sanzang_3d',
+    categoryId: 'toys_3d',
+    categoryTitle: 'តុក្កតា & 3D (Toys, Chibi & 3D Objects)',
+    name: 'ព្រះថាំងចេង 3D (Tang Sanzang 3D - Monk Master)',
+    badge: 'តុក្កតា 3D • Tang Sanzang',
+    emoji: '📿✨',
+    description: 'Tang Sanzang, the noble Buddhist monk master in 3D animated movie style: a handsome and dignified young monk wearing an ornate five-Buddha crown, flowing red and yellow silk kasaya robes, holding a golden Buddhist Khakkhara staff, serene compassionate facial expression, glowing spiritual aura, Pixar and Disney aesthetic, soft atmospheric lighting, 8k resolution, highly detailed.',
+    defaultStyle: 'Cinematic 3D animation style, Disney Pixar aesthetic, ornate golden robes, soft spiritual rim light, 8k'
+  },
+  {
+    id: 'toy_zhu_bajie_3d',
+    categoryId: 'toys_3d',
+    categoryTitle: 'តុក្កតា & 3D (Toys, Chibi & 3D Objects)',
+    name: 'ជ្រូកប៉ាចេ 3D (Zhu Bajie 3D - Pigsy)',
+    badge: 'តុក្កតា 3D • Zhu Bajie',
+    emoji: '🐷🛡️',
+    description: 'Zhu Bajie, the cheerful and plump pig warrior in 3D animated movie style: rounded expressive face with floppy ears and friendly snout, wearing rugged blue-green plate armor, holding his iconic combat rake, animated comedic and endearing personality, Pixar and Disney aesthetic, rich vibrant textures, 8k resolution, highly detailed.',
+    defaultStyle: 'Cinematic 3D animation style, Disney Pixar aesthetic, charming stylized pig demon warrior, vibrant lighting, 8k'
+  },
+  {
+    id: 'toy_sha_wujing_3d',
+    categoryId: 'toys_3d',
+    categoryTitle: 'តុក្កតា & 3D (Toys, Chibi & 3D Objects)',
+    name: 'សារអ៊ូជិញ 3D (Sha Wujing 3D - Sandy)',
+    badge: 'តុក្កតា 3D • Sha Wujing',
+    emoji: '🌊🔱',
+    description: 'Sha Wujing, the stalwart loyal warrior in 3D animated movie style: tall and muscular build with stylized glowing blue skin, dark beard, wearing a distinctive necklace of skulls and martial robes, wielding his heavy crescent shovel staff, dependable guardian posture, Pixar and Disney aesthetic, dramatic rim lighting, 8k resolution, highly detailed.',
+    defaultStyle: 'Cinematic 3D animation style, Disney Pixar aesthetic, stylized blue-skinned warrior, skull beads necklace, 8k'
+  },
   {
     id: 'toy_teddy_bear',
     categoryId: 'toys_3d',
@@ -1094,17 +1225,41 @@ const getDefaultCharacterList = (): StoryCharacterItem[] => {
   return [createCharacterItem(boy, 'តួឯក (Protagonist)')];
 };
 
+export const sanitizeCharacterDescription = (desc: string): string => {
+  if (!desc) return '';
+  let updated = desc;
+
+  // 1. Remove clapperboard references in hands
+  updated = updated
+    .replace(/ដៃកាន់ក្តារចុចឈុតកុន[^\n()]*Movie\s*Clapperboard[^\n()]*\(Handsome 3D Pixar\/Disney style teenage movie director boy[^\n)]*\)/gi,
+      'ដៃទទេតាមធម្មជាតិ មិនកាន់វត្ថុអ្វីឡើយ (លុះត្រាតែសាច់រឿងបង្កើតមកឱ្យកាន់ក្នុង shot ណាមួយ)។ មុខមាត់ រូបរាង សក់ និងសម្លៀកបំពាក់រក្សាដដែល ១០០% (Hands naturally empty and free, holding nothing unless dictated by a specific shot narrative, maintaining 100% identical facial features and clothing consistency)')
+    .replace(/ដៃកាន់ក្តារចុចឈុតកុន[^\n()]*Movie\s*Clapperboard[^\n()]*[។.]?/gi,
+      'ដៃទទេតាមធម្មជាតិ មិនកាន់វត្ថុអ្វីឡើយ (លុះត្រាតែសាច់រឿងបង្កើតមកឱ្យកាន់ក្នុង shot ណាមួយ)។')
+    .replace(/holding (?:film |movie )?clapperboard[^\n,)]*/gi,
+      'hands naturally empty and free, holding nothing unless dictated by a specific shot narrative')
+
+  // 2. Remove tablet references in hands
+    .replace(/ដៃកាន់\s*Tablet\s*ភ្លឺចែងចាំងកំពុងពិនិត្យសាច់រឿង[^\n()]*\(Charming 3D Pixar\/Disney style teenage actress girl[^\n)]*\)/gi,
+      'ដៃទទេតាមធម្មជាតិ មិនកាន់វត្ថុអ្វីឡើយ (លុះត្រាតែសាច់រឿងបង្កើតមកឱ្យកាន់ក្នុង shot ណាមួយ)។ មុខមាត់ រូបរាង សក់ និងសម្លៀកបំពាក់រក្សាដដែល ១០០% (Hands naturally empty and free, holding nothing unless dictated by a specific shot narrative, maintaining 100% identical facial features and clothing consistency)')
+    .replace(/ដៃកាន់\s*Tablet\s*ភ្លឺចែងចាំងកំពុងពិនិត្យសាច់រឿង[^\n()]*[។.]?/gi,
+      'ដៃទទេតាមធម្មជាតិ មិនកាន់វត្ថុអ្វីឡើយ (លុះត្រាតែសាច់រឿងបង្កើតមកឱ្យកាន់ក្នុង shot ណាមួយ)។')
+    .replace(/holding (?:glowing |futuristic )?(?:script )?tablet[^\n,)]*/gi,
+      'hands naturally empty and free, holding nothing unless dictated by a specific shot narrative');
+
+  return updated;
+};
+
 const formatCharactersDescription = (list: StoryCharacterItem[]): string => {
   if (list.length === 0) return '';
   if (list.length === 1) {
     const c = list[0];
     const roleLabel = [c.customName, c.role].filter(Boolean).join(' • ');
-    return `${c.name}${roleLabel ? ` (${roleLabel})` : ''}៖ ${c.description}`;
+    return `${c.name}${roleLabel ? ` (${roleLabel})` : ''}៖ ${sanitizeCharacterDescription(c.description)}`;
   }
   return list
     .map((c, i) => {
       const roleLabel = [c.customName, c.role].filter(Boolean).join(' • ');
-      return `• តួអង្គទី ${i + 1} [${c.name}${roleLabel ? ` - ${roleLabel}` : ''}]៖ ${c.description}`;
+      return `• តួអង្គទី ${i + 1} [${c.name}${roleLabel ? ` - ${roleLabel}` : ''}]៖ ${sanitizeCharacterDescription(c.description)}`;
     })
     .join('\n\n');
 };
@@ -1121,6 +1276,34 @@ const CHARACTER_COMBOS = [
     items: [
       { id: 'human_boy', role: 'តួឯក (Boy)' },
       { id: 'human_girl', role: 'ដៃគូ (Girl)' }
+    ]
+  },
+  {
+    name: '✨ Leo & Maya 3D',
+    emoji: '👫',
+    items: [
+      { id: 'toy_leo_3d', role: 'តួឯកប្រុស (Leo)' },
+      { id: 'toy_maya_3d', role: 'តួឯកស្រី (Maya)' }
+    ]
+  },
+  {
+    name: '🏮 ក្រុមស៊ុនអ៊ូខុង 3D',
+    emoji: '🐒',
+    items: [
+      { id: 'toy_sun_wukong_3d', role: 'តួឯក (Sun Wukong 3D)' },
+      { id: 'toy_tang_sanzang_3d', role: 'គ្រូអាចារ្យ (Tang Sanzang 3D)' },
+      { id: 'toy_zhu_bajie_3d', role: 'សិស្សប្អូនទី២ (Zhu Bajie 3D)' },
+      { id: 'toy_sha_wujing_3d', role: 'សិស្សប្អូនទី៣ (Sha Wujing 3D)' }
+    ]
+  },
+  {
+    name: '⛩️ ក្រុមស៊ុនអ៊ូខុង មនុស្សពិត',
+    emoji: '🎬',
+    items: [
+      { id: 'human_sun_wukong_realistic', role: 'តួឯក (Sun Wukong Live-Action)' },
+      { id: 'human_tang_sanzang_realistic', role: 'គ្រូអាចារ្យ (Tang Sanzang Live-Action)' },
+      { id: 'human_zhu_bajie_realistic', role: 'សិស្សប្អូនទី២ (Zhu Bajie Live-Action)' },
+      { id: 'human_sha_wujing_realistic', role: 'សិស្សប្អូនទី៣ (Sha Wujing Live-Action)' }
     ]
   },
   {
@@ -1199,6 +1382,22 @@ export const CINEMATIC_STYLE_PRESETS: CinematicStylePreset[] = [
     subtitle: 'Unreal Engine 5, stylized character, vibrant color palette',
     badge: '3D Pixar',
     value: '3D Pixar animation style, Disney rendered, Unreal Engine 5, stylized character, vibrant color palette, soft subsurface scattering, volumetric warm lighting, ray tracing, expressive 8K render'
+  },
+  {
+    id: 'journey-to-west-3d',
+    icon: '🏮',
+    label: '🏮 ស៊ុនអ៊ូខុង 3D (Journey to the West 3D)',
+    subtitle: 'Pixar & Disney 3D animation, misty mountains, ancient temples, 8k',
+    badge: '3D Sun Wukong',
+    value: 'A cinematic 3D animated movie style of Journey to the West, rocky mountain peak overlooking misty mountain landscape with ancient temples, Pixar and Disney aesthetic, vibrant cinematic lighting, highly detailed, 8k resolution'
+  },
+  {
+    id: 'journey-to-west-realistic',
+    icon: '⛩️',
+    label: '⛩️ ស៊ុនអ៊ូខុង មនុស្សពិត (Journey to the West Live-Action)',
+    subtitle: 'Epic live-action movie still, dramatic foggy mountain cliff, 8k',
+    badge: 'Live-Action Sun Wukong',
+    value: 'A cinematic live-action movie still of Journey to the West, standing on a majestic mountain cliff with dramatic foggy mountain and temple background, epic cinematic lighting, ultra-realistic textures, authentic silk and battle-worn armor, photorealistic, 8k resolution'
   },
   {
     id: 'khmer-fantasy',
@@ -1298,7 +1497,16 @@ export default function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          return parsed.map((item: StoryCharacterItem) => {
+            if (item.typeId?.includes('story_actor_3d')) {
+              const defaultBoy = CHARACTER_TYPES.find((t) => t.id === 'human_boy') || CHARACTER_TYPES[0];
+              return createCharacterItem(defaultBoy, item.role || 'តួឯក (Protagonist)', item.customName);
+            }
+            return {
+              ...item,
+              description: sanitizeCharacterDescription(item.description)
+            };
+          });
         }
       }
     } catch {
@@ -1610,7 +1818,17 @@ export default function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return formatCharactersDescription(parsed);
+          const sanitizedList = parsed.map((item: StoryCharacterItem) => {
+            if (item.typeId?.includes('story_actor_3d') || item.name?.includes('STORY ACTOR 3D')) {
+              const defaultBoy = CHARACTER_TYPES.find((t) => t.id === 'human_boy') || CHARACTER_TYPES[0];
+              return createCharacterItem(defaultBoy, item.role || 'តួឯក (Protagonist)', item.customName);
+            }
+            return {
+              ...item,
+              description: sanitizeCharacterDescription(item.description)
+            };
+          });
+          return formatCharactersDescription(sanitizedList);
         }
       }
     } catch {
@@ -1625,6 +1843,58 @@ export default function App() {
   const [isStyleDropdownOpen, setIsStyleDropdownOpen] = useState<boolean>(false);
   const [visualStyle, setVisualStyle] = useState<string>(CINEMATIC_STYLE_PRESETS[0].value);
   const styleDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Proactively clean legacy story_actor_3d and held props from character lock state & localStorage on mount
+  useEffect(() => {
+    setCharacters((prev) => {
+      if (
+        prev &&
+        (prev.includes('STORY ACTOR 3D') ||
+          prev.includes('Story Actor 3D') ||
+          prev.includes('ក្តារចុច') ||
+          prev.includes('Tablet') ||
+          prev.includes('Clapperboard') ||
+          prev.includes('clapperboard') ||
+          prev.includes('កំពុងពិនិត្យសាច់រឿង'))
+      ) {
+        const defaultBoy = CHARACTER_TYPES.find((t) => t.id === 'human_boy') || CHARACTER_TYPES[0];
+        return formatCharactersDescription([createCharacterItem(defaultBoy, 'តួឯក (Protagonist)')]);
+      }
+      return prev;
+    });
+
+    setCharacterList((prevList) => {
+      let changed = false;
+      const cleanedList = prevList.map((item) => {
+        if (
+          item.typeId?.includes('story_actor_3d') ||
+          item.name?.includes('STORY ACTOR 3D') ||
+          item.name?.includes('Story Actor 3D') ||
+          (item.description &&
+            (item.description.includes('ក្តារចុច') ||
+              item.description.includes('Tablet') ||
+              item.description.includes('Clapperboard') ||
+              item.description.includes('clapperboard') ||
+              item.description.includes('កំពុងពិនិត្យសាច់រឿង')))
+        ) {
+          changed = true;
+          const defaultBoy = CHARACTER_TYPES.find((t) => t.id === 'human_boy') || CHARACTER_TYPES[0];
+          return createCharacterItem(defaultBoy, item.role || 'តួឯក (Protagonist)', item.customName);
+        }
+        return item;
+      });
+
+      if (changed) {
+        try {
+          localStorage.setItem('story_app_character_list', JSON.stringify(cleanedList));
+        } catch {
+          // ignore
+        }
+        return cleanedList;
+      }
+      return prevList;
+    });
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -2183,7 +2453,7 @@ export default function App() {
 ${timeRange} (${durationPerPrompt} វិនាទី)
 • ${pLang.cameraLabel}៖ ${cameraMotion}
 • ${pLang.actionLabel}៖ ${actionDesc}
-• ${pLang.continuityLabel}៖ រក្សាតួអង្គ ${charDesc} មុខមាត់ សម្លៀកបំពាក់ និងម៉ូតសក់ដដែល ១០០% គ្មានការប្រែប្រួល និងតភ្ជាប់សាច់រឿងបន្តពីឈុតមុនយ៉ាងរលូន។
+• ${pLang.continuityLabel}៖ ដៃទទេតាមធម្មជាតិ មិនកាន់វត្ថុអ្វីឡើយ (លុះត្រាតែសកម្មភាពសាច់រឿងបង្កើតមកឱ្យកាន់)។ រក្សាតួអង្គ ${charDesc} មុខមាត់ សម្លៀកបំពាក់ និងម៉ូតសក់ដដែល ១០០% គ្មានការប្រែប្រួល និងតភ្ជាប់សាច់រឿងបន្តពីឈុតមុនយ៉ាងរលូន។
 ${dialogueLine}
 • ${pLang.lightingLabel}៖ ${visualStyle}, រូបភាពភាពយន្តកម្រិតខ្ពស់, ពន្លឺធម្មជាតិច្បាស់ត្រជាក់ភ្នែក`;
       } else {
@@ -2191,7 +2461,7 @@ ${dialogueLine}
 ${timeRange} (${durationPerPrompt}s)
 • ${pLang.cameraLabel}: ${cameraMotion}
 • ${pLang.actionLabel}: ${actionDesc}
-• ${pLang.continuityLabel}: Continuous identical character throughout all shots: ${charDesc}, same facial features, matching hairstyle, identical clothing and colors. Seamless narrative progression from previous shot with zero jump cuts.
+• ${pLang.continuityLabel}: Strict 100% character face, facial features, hair, and clothing consistency for ${charDesc}. Hands are naturally free and empty by default without holding any props unless specifically dictated by the scene narrative. Seamless visual continuity from previous shot with zero jump cuts.
 ${dialogueLine}
 • ${pLang.lightingLabel}: ${visualStyle}, Cinematic 8K, photorealistic masterpiece, 35mm lens, dramatic volumetric lighting.`;
       }
