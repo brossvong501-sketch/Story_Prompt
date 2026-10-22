@@ -209,6 +209,22 @@ const ALPHABET_ITEMS = [
  * strictly derived from story title, description, and scene progression.
  * Guarantees zero repetition between scenes!
  */
+export interface NarrativeBeat {
+  phaseTitleKhmer: string;
+  phaseTitleEnglish: string;
+  actionDescKhmer: string;
+  actionDescEnglish: string;
+  continuityKhmer: string;
+  continuityEnglish: string;
+  cameraKhmer: string;
+  cameraEnglish: string;
+}
+
+/**
+ * Dynamically builds contextually accurate in-character spoken dialogue for a specific scene,
+ * strictly derived from story title, description, and episodic narrative progression.
+ * Guarantees zero repetition between scenes and NO narrator clichés!
+ */
 export function buildContextualDialogue(
   title: string,
   description: string,
@@ -217,11 +233,11 @@ export function buildContextualDialogue(
   languageId: string = 'english',
   characterName: string = ''
 ): string {
-  const t = title.toLowerCase();
-  const d = description.toLowerCase();
-  const lang = languageId.toLowerCase().trim();
+  const t = (title || '').toLowerCase();
+  const d = (description || '').toLowerCase();
+  const lang = (languageId || 'english').toLowerCase().trim();
   const isKhmer = lang === 'khmer';
-  const isEnglish = lang === 'english' || (!isKhmer && lang !== 'chinese');
+  const char = characterName && characterName.trim() ? characterName.trim() : (isKhmer ? 'តួអង្គ' : 'Character');
 
   // 1. Context: English Alphabet (A to Z) Learning
   const isAlphabetStory =
@@ -237,9 +253,9 @@ export function buildContextualDialogue(
     const itemIndex = (sceneNumber - 1) % ALPHABET_ITEMS.length;
     const item = ALPHABET_ITEMS[itemIndex];
     if (isKhmer) {
-      return `«អក្សរ ${item.letter}! ${item.letter} តំណាងឱ្យពាក្យ ${item.word}! តោះយើងអានទាំងអស់គ្នា៖ ${item.word}!»`;
+      return `«អក្សរ ${item.letter}! ${item.letter} តំណាងឱ្យពាក្យ ${item.word}! តោះយើងបញ្ចេញសំឡេងទាំងអស់គ្នា៖ ${item.word}!»`;
     }
-    return `"${item.letter} is for ${item.word}! Look at this wonderful ${item.word.toLowerCase()}! Let's say it together: ${item.word}!"`;
+    return `"${item.letter} is for ${item.word}! Look at this wonderful ${item.word.toLowerCase()}! Let's pronounce it: ${item.word}!"`;
   }
 
   // 2. Context: Numbers & Counting (1, 2, 3...)
@@ -251,88 +267,328 @@ export function buildContextualDialogue(
 
   if (isNumberStory) {
     if (isKhmer) {
-      return `«លេខ ${sceneNumber}! សូមក្រឡេកមើលចំណុចទី ${sceneNumber} នេះទាំងអស់គ្នា!»`;
+      return `«លេខ ${sceneNumber}! សូមក្រឡេកមើលចំនួនទី ${sceneNumber} នេះទាំងអស់គ្នា!»`;
     }
     return `"Number ${sceneNumber}! Let's count step ${sceneNumber} together right here!"`;
   }
 
-  // 3. Context: Superhero & Saving the City
+  // 3. Context: Online Scam, Cybercrime, Fraud (ការឆបោក, លួចទិន្នន័យ, បោកបញ្ឆោត)
+  const isScamOrCrime =
+    t.includes('ឆបោក') ||
+    t.includes('scam') ||
+    t.includes('បោក') ||
+    t.includes('លួច') ||
+    t.includes('hacker') ||
+    t.includes('លុយ') ||
+    t.includes('គណនី') ||
+    d.includes('ឆបោក') ||
+    d.includes('scam') ||
+    d.includes('បោកបញ្ឆោត');
+
+  if (isScamOrCrime) {
+    if (sceneNumber === 1) {
+      return isKhmer
+        ? `«សារនេះចម្លែកខ្លាំងណាស់... ពួកគេទាមទារលេខសម្ងាត់ OTP និងគណនីរបស់ខ្ញុំជាបន្ទាន់?»`
+        : `"This urgent message looks suspicious... Why are they demanding my security OTP code immediately?"`;
+    }
+    if (sceneNumber === totalScenes) {
+      return isKhmer
+        ? `«ជោគជ័យហើយ! គណនីត្រូវបានការពារសុវត្ថិភាព ហើយភស្តុតាងទាំងអស់ត្រូវបានបញ្ជូនទៅអាជ្ញាធរ!»`
+        : `"Success! The account is locked down safely, and all criminal evidence is secured for the cyber unit!"`;
+    }
+    const scamStepsKhmer = [
+      `«កុំទាន់អាលចុចលើតំណភ្ជាប់នោះឱ្យសោះ! នេះគឺជាគេហទំព័រក្លែងបន្លំដើម្បីលួចទិន្នន័យ!»`,
+      `«មើលទៅប្រព័ន្ធផ្ទេរប្រាក់! ពួកគេកំពុងព្យាយាមចូលប្រើប្រាស់ពីចម្ងាយ យើងត្រូវតែផ្តាច់អ៊ីនធឺណិតជាបន្ទាន់!»`,
+      `«ខ្ញុំបានកត់ត្រាអាសយដ្ឋាន IP និងលេខគណនីក្លែងក្លាយនេះទុកជាភស្តុតាងរួចរាល់ហើយ!»`,
+      `«រារាំងការផ្ទេរប្រាក់ភ្លាម! យើងមិនអាចបណ្តោយឱ្យជនឆបោកនេះរួចខ្លួនបានជាដាច់ខាត!»`,
+      `«ប្រព័ន្ធសុវត្ថិភាពកំពុងបញ្ច្រាសទិន្នន័យត្រឡប់មកវិញ! យើងជិតតាមទាន់ប្រភពដើមរបស់ពួកគេហើយ!»`,
+    ];
+    const scamStepsEn = [
+      `"Do not click that link! It's a phishing trap designed to steal personal banking credentials!"`,
+      `"Look at the unauthorized access attempt! They are trying to siphon funds remotely, cut the connection now!"`,
+      `"I've traced the rogue IP address and logged the transaction trail for immediate enforcement!"`,
+      `"Freeze the transaction immediately! We will not let these scammers exploit another victim!"`,
+      `"Firewalls are holding! We are reversing the breach and isolating the fraud network!"`,
+    ];
+    const idx = (sceneNumber - 2) % scamStepsKhmer.length;
+    return isKhmer ? scamStepsKhmer[idx] : scamStepsEn[idx];
+  }
+
+  // 4. Context: Ghost, Horror, Haunted, Mystery (ខ្មោច, ព្រលឹង, ផ្ទះចាស់, អាថ៌កំបាំង)
+  const isHorrorOrMystery =
+    t.includes('ខ្មោច') ||
+    t.includes('ព្រលឹង') ||
+    t.includes('ផ្ទះចាស់') ||
+    t.includes('រន្ធត់') ||
+    t.includes('ghost') ||
+    t.includes('horror') ||
+    t.includes('haunted') ||
+    t.includes('mystery') ||
+    t.includes('zombie') ||
+    d.includes('ខ្មោច') ||
+    d.includes('ព្រឺសម្បុរ');
+
+  if (isHorrorOrMystery) {
+    if (sceneNumber === 1) {
+      return isKhmer
+        ? `«ផ្ទះនេះស្ងាត់ជ្រងំគួរឱ្យព្រឺសម្បុរណាស់... តើអ្នកណាទុកទ្វារចំហបែបនេះ?»`
+        : `"This place is deathly silent... Who could have left that heavy wooden door wide open?"`;
+    }
+    if (sceneNumber === totalScenes) {
+      return isKhmer
+        ? `«ទីបំផុតយើងបានរួចផុតពីទីនេះហើយ... អាថ៌កំបាំងដ៏រន្ធត់ត្រូវបានលាតត្រដាងក្នុងពន្លឺព្រះអាទិត្យ!»`
+        : `"We made it out alive... The ancient haunting mystery is finally put to rest in the morning light!"`;
+    }
+    const horrorStepsKhmer = [
+      `«ឮសំឡេងជើងដើរនៅជាន់ខាងលើទេ? ដូចជាមាននរណាម្នាក់កំពុងសម្លឹងមើលយើងពីទីងងឹត...»`,
+      `«ពន្លឺភ្លើងស្រាប់តែរលត់! កុំបែកគ្នាឱ្យសោះ កាន់ពិលឱ្យជាប់ ហើយមើលជុំវិញខ្លួន!»`,
+      `«ស្រមោលនោះ... វាហាក់ដូចជាកំពុងចង្អុលបង្ហាញផ្លូវសម្ងាត់ ឬជាការដាស់តឿនយើង?»`,
+      `«ខ្យល់ត្រជាក់ស្រឹបបក់កាត់... យើងត្រូវតែស្វែងរកច្រកចេញឱ្យឃើញមុនពេលយប់ជ្រៅ!»`,
+      `«កុំងាកក្រោយ! រត់ឆ្ពោះទៅកាន់ពន្លឺនៅមាត់ទ្វារខាងក្រៅឱ្យលឿនបំផុត!»`,
+    ];
+    const horrorStepsEn = [
+      `"Did you hear those footsteps creaking upstairs? Something is watching us from the shadows..."`,
+      `"The lights just flickered out! Stay together, keep your flashlight pointed forward!"`,
+      `"That silhouette... Is it guarding an escape passage or warning us to turn back?"`,
+      `"The temperature just plunged to freezing... We must uncover the key before midnight strikes!"`,
+      `"Don't look back! Run toward the doorway into the open air right now!"`,
+    ];
+    const idx = (sceneNumber - 2) % horrorStepsKhmer.length;
+    return isKhmer ? horrorStepsKhmer[idx] : horrorStepsEn[idx];
+  }
+
+  // 5. Context: Superhero, Rescue, Urban Mission (វីរបុរស, សង្គ្រោះ, ប្រយុទ្ធ)
   const isSuperhero =
     t.includes('superman') ||
     t.includes('spiderman') ||
     t.includes('iron man') ||
+    t.includes('batman') ||
     t.includes('វីរបុរស') ||
     t.includes('ពាសដែក') ||
     t.includes('ពីងពាង') ||
     t.includes('titan') ||
     d.includes('superhero') ||
-    d.includes('សង្គ្រោះ');
+    d.includes('សង្គ្រោះទីក្រុង');
 
   if (isSuperhero) {
     if (sceneNumber === 1) {
       return isKhmer
-        ? `«ប្រព័ន្ធផ្ញើសញ្ញាអាសន្ន! ទីក្រុងត្រូវការយើង ខ្ញុំត្រូវតែទៅសង្គ្រោះឥឡូវនេះ!»`
-        : `"Emergency signal detected! The city is in danger, I am taking off immediately!"`;
+        ? `«សញ្ញាអាសន្នបានបន្លឺឡើង! ទីក្រុងត្រូវការយើង ខ្ញុំត្រូវតែទៅសង្គ្រោះឥឡូវនេះ!»`
+        : `"Emergency beacon detected! The city needs us, launching into action immediately!"`;
     }
     if (sceneNumber === totalScenes) {
       return isKhmer
         ? `«ទីក្រុងមានសុវត្ថិភាពហើយ! យុត្តិធម៌និងសន្តិភាពត្រូវបានការពារយ៉ាងពេញលេញ!»`
-        : `"The city is safe now! Justice and peace have been restored for everyone!"`;
+        : `"The city is safe once more! Justice and protection stand firm for everyone!"`;
     }
-    // Dynamic progressive lines based on scene number
     const heroStepsKhmer = [
-      `«ខ្ញុំបានមកដល់ចំណុចកណ្តាលនៃហេតុការណ៍ហើយ មើលទៅឧបសគ្គនេះធ្ងន់ធ្ងរណាស់!»`,
+      `«ខ្ញុំបានមកដល់ចំណុចកណ្តាលនៃហេតុការណ៍ហើយ ត្រូវតែជម្លៀសពលរដ្ឋជាបន្ទាន់!»`,
       `«ផ្តោតថាមពលទាំងអស់! ខ្ញុំនឹងប្រើប្រាស់កម្លាំងពេញទំហឹងដើម្បីទប់ទល់គ្រោះថ្នាក់នេះ!»`,
-      `«អ្នករាល់គ្នានៅទីនេះមានសុវត្ថិភាពហើយ! ខ្ញុំកំពុងជម្លៀសពលរដ្ឋចេញពីតំបន់គ្រោះថ្នាក់!»`,
+      `«កុំបារម្ភអីអ្នករាល់គ្នា! ខ្ញុំកំពុងគ្រប់គ្រងស្ថានការណ៍ និងទប់លំនឹងអគារនេះ!»`,
       `«កម្ទេចឧបសគ្គចុងក្រោយ! គ្មានអ្វីអាចរារាំងការការពារទីក្រុងនេះបានឡើយ!»`,
     ];
     const heroStepsEn = [
-      `"I've arrived at the epicenter, the danger is escalating fast!"`,
-      `"Target acquired! Activating full power systems to neutralize the threat!"`,
-      `"Civilians are secure! I am holding the structure steady right now!"`,
-      `"Final strike! Nothing will stand in the way of protecting our world!"`,
+      `"Arrived at ground zero! Securing civilian evacuation routes first!"`,
+      `"Target acquired! Diverting maximum output to neutralize the incoming threat!"`,
+      `"Stay calm everyone, you are safe! I've stabilized the perimeter structure!"`,
+      `"Final strike! Nothing will stand in the way of protecting this world!"`,
     ];
     const idx = (sceneNumber - 2) % heroStepsKhmer.length;
     return isKhmer ? heroStepsKhmer[idx] : heroStepsEn[idx];
   }
 
-  // 4. General Dynamic Contextual Flow:
-  // Dynamically anchored to the Story Title & Scene Phase
-  const cleanTitle = title.replace(/[«»"']/g, '').trim();
+  // 6. Context: Adventure, Ancient Temple, Quest, Jungle (ដំណើរផ្សងព្រេង, ប្រាសាទ, ព្រៃជ្រៅ)
+  const isAdventure =
+    t.includes('ផ្សងព្រេង') ||
+    t.includes('ប្រាសាទ') ||
+    t.includes('ព្រៃ') ||
+    t.includes('រូងភ្នំ') ||
+    t.includes('កំណប់') ||
+    t.includes('adventure') ||
+    t.includes('temple') ||
+    t.includes('jungle') ||
+    t.includes('treasure') ||
+    d.includes('ផ្សងព្រេង') ||
+    d.includes('រុករក');
 
-  if (sceneNumber === 1) {
-    if (isKhmer) {
-      return `«សូមស្វាគមន៍មកកាន់ដំណើររឿង «${cleanTitle}»! តោះយើងចាប់ផ្តើមស្វែងយល់ទាំងអស់គ្នា!»`;
+  if (isAdventure) {
+    if (sceneNumber === 1) {
+      return isKhmer
+        ? `«ទីតាំងក្នុងផែនទីបុរាណគឺនៅត្រង់នេះហើយ... ដំណើររុករកអាថ៌កំបាំងបានចាប់ផ្តើម!»`
+        : `"The coordinates from the ancient map lead directly here... The expedition begins now!"`;
     }
-    return `"Welcome to ${cleanTitle}! Our thrilling journey begins right here, let's explore!"`;
+    if (sceneNumber === totalScenes) {
+      return isKhmer
+        ? `«យើងបានរកឃើញហើយ! របកគំហើញប្រវត្តិសាស្ត្រដ៏អស្ចារ្យនេះនឹងត្រូវចងចាំជារៀងរហូត!»`
+        : `"We found it! This extraordinary historical discovery will inspire generations forever!"`;
+    }
+    const advStepsKhmer = [
+      `«មើលចម្លាក់បុរាណលើផ្ទាំងថ្មនេះចុះ! វាជាសញ្ញាសម្ងាត់ប្រាប់ពីច្រកចូលខាងក្នុង!»`,
+      `«ប្រយ័ត្នជើង! ថ្មនៅត្រង់នេះរអិលខ្លាំងណាស់ កាន់ខ្សែពួរឱ្យជាប់ ហើយឈានទៅមុខយឺតៗ!»`,
+      `«ពន្លឺចាំងផ្លេកនៅខាងមុខ... នោះប្រហែលជាវត្ថុបុរាណដែលកប់ទុកជាច្រើនសតវត្សរ៍!»`,
+      `«ជិតដល់ហើយ! ប្រើប្រាស់កម្លាំងចុងក្រោយដើម្បីបើកទ្វារថ្មដ៏ធំនេះ!»`,
+    ];
+    const advStepsEn = [
+      `"Examine these stone glyphs! They reveal the hidden mechanism to unlock the inner sanctum!"`,
+      `"Watch your footing on this slippery ledge! Hold the rope firm and advance carefully!"`,
+      `"A golden gleam reflects in the distance... That must be the long-lost artifact of the ancients!"`,
+      `"Almost there! Together, we turn the celestial stone dial to unveil the inner chamber!"`,
+    ];
+    const idx = (sceneNumber - 2) % advStepsKhmer.length;
+    return isKhmer ? advStepsKhmer[idx] : advStepsEn[idx];
+  }
+
+  // 7. Context: Romance, Emotional Drama, Friendship (មនោសញ្ចេតនា, មិត្តភាព, ស្នេហា)
+  const isRomanceOrDrama =
+    t.includes('ស្នេហា') ||
+    t.includes('មិត្តភាព') ||
+    t.includes('គ្រួសារ') ||
+    t.includes('នឹក') ||
+    t.includes('ស្រឡាញ់') ||
+    t.includes('romance') ||
+    t.includes('love') ||
+    t.includes('drama') ||
+    d.includes('មនោសញ្ចេតនា') ||
+    d.includes('អារម្មណ៍');
+
+  if (isRomanceOrDrama) {
+    if (sceneNumber === 1) {
+      return isKhmer
+        ? `«យូរហើយដែលយើងមិនបានជួបគ្នា... ទីកន្លែងនេះនៅតែដដែល មិនប្រែប្រួលឡើយ។»`
+        : `"It's been so long since we stood here... Yet this place hasn't changed a bit."`;
+    }
+    if (sceneNumber === totalScenes) {
+      return isKhmer
+        ? `«ចាប់ពីពេលនេះទៅ យើងនឹងដើរលើផ្លូវជីវិតនេះជាមួយគ្នាដោយស្នាមញញឹម និងក្តីសង្ឃឹម។»`
+        : `"From this moment forward, we walk this journey together with trust and renewed hope."`;
+    }
+    const dramaStepsKhmer = [
+      `«ខ្ញុំចាំបាននូវរាល់ពាក្យសន្យា និងអនុស្សាវរីយ៍ដែលយើងធ្លាប់ឆ្លងកាត់ជាមួយគ្នា។»`,
+      `«ទោះបីជាមានការយល់ច្រឡំកន្លងមក ក៏ខ្ញុំមិនដែលបោះបង់ជំនឿចិត្តលើអ្នកឡើយ។»`,
+      `«សូមស្តាប់ការបកស្រាយពីបេះដូងពិតរបស់ខ្ញុំ... អ្វីគ្រប់យ៉ាងគឺធ្វើឡើងដើម្បីការពារអ្នក។»`,
+      `«ទឹកភ្នែកនេះជាសញ្ញានៃការយល់ចិត្តគ្នា... អរគុណដែលនៅតែឈរក្បែរខ្ញុំក្នុងគ្រាលំបាក។»`,
+    ];
+    const dramaStepsEn = [
+      `"I remember every promise and memory we shared beneath these very skies."`,
+      `"Despite past misunderstandings, I never stopped believing in what we built."`,
+      `"Listen to what's truly in my heart... Everything I did was to keep our bond safe."`,
+      `"These tears mean forgiveness and healing... Thank you for staying by my side."`,
+    ];
+    const idx = (sceneNumber - 2) % dramaStepsKhmer.length;
+    return isKhmer ? dramaStepsKhmer[idx] : dramaStepsEn[idx];
+  }
+
+  // 8. General Narrative Storyline Flow:
+  // Strictly in-character dialogue anchored to the story situation, zero meta clichés!
+  if (sceneNumber === 1) {
+    return isKhmer
+      ? `«យើងបានមកដល់ចំណុចចាប់ផ្តើមហើយ... ត្រូវតែប្រុងប្រយ័ត្ន និងផ្តោតលើគោលដៅ!»`
+      : `"We've reached the starting coordinates... Keep your eyes sharp and stay focused on the mission."`;
   }
 
   if (sceneNumber === totalScenes) {
-    if (isKhmer) {
-      return `«ទីបំផុត ដំណើររឿង «${cleanTitle}» របស់យើងបានឈានដល់ទីបញ្ចប់ដ៏អស្ចារ្យ!»`;
-    }
-    return `"At last, we have accomplished the ultimate goal in ${cleanTitle}! Look at what we achieved!"`;
+    return isKhmer
+      ? `«ទីបំផុតយើងបានសម្រេចគោលដៅហើយ! ការខិតខំទាំងអស់ពិតជាទទួលបានលទ្ធផលដ៏គាប់ប្រសើរ!»`
+      : `"We finally accomplished the objective! Every ounce of effort was truly worth this victory!"`;
   }
 
-  // Middle scenes: progressive narrative steps without any clichés or repetitions
-  const progressivePhrasesKhmer = [
-    `«ក្រឡេកមើលទៅមុខ! ដំណើររឿង «${cleanTitle}» កំពុងបង្ហាញតម្រុយសំខាន់ថ្មីមួយទៀតហើយ!»`,
-    `«យើងកំពុងឈានចូលជ្រៅទៅក្នុងចំណុចស្នូល ត្រូវតែយកចិត្តទុកដាក់លើរាល់សកម្មភាព!»`,
-    `«ទិដ្ឋភាពនេះពិតជាអស្ចារ្យណាស់ មើលការផ្លាស់ប្តូរដែលកំពុងកើតឡើងនៅចំពោះមុខយើង!»`,
-    `«សកម្មភាពកាន់តែរំភើបឡើង! ជំហានបន្ទាប់នឹងជាចំណុចរបត់ដ៏សំខាន់នៃរឿង!»`,
-    `«យើងបានឆ្លងកាត់ដំណាក់កាលលំបាកហើយ ដំណោះស្រាយកាន់តែខិតជិតមកដល់!»`,
-    `«មើលទៅទីតាំងខាងមុខ! អ្វីៗទាំងអស់កំពុងផ្សារភ្ជាប់គ្នាយ៉ាងល្អឥតខ្ចោះ!»`,
+  const generalProgressiveKhmer = [
+    `«មើលចំណុចនេះ! នេះជាតម្រុយសំខាន់ដែលតភ្ជាប់ទៅកាន់ជំហានបន្ទាប់!»`,
+    `«ឧបសគ្គកាន់តែស្មុគស្មាញឡើង ត្រូវតែរក្សាភាពស្ងប់ស្ងាត់ ហើយធ្វើតាមផែនការ!»`,
+    `«ស្ថានការណ៍កំពុងផ្លាស់ប្តូរលឿនណាស់ ចូរប្រមូលកម្លាំងដើម្បីដោះស្រាយចំណុចនេះ!»`,
+    `«គ្មានពេលរារែកទៀតទេ! ជំហាននេះជាចំណុចរបត់ដ៏សំខាន់នៃដំណើររឿង!»`,
+    `«ជិតដល់ទីបញ្ចប់ហើយ! មួយជំហានទៀតប៉ុណ្ណោះ យើងនឹងដោះស្រាយរឿងនេះបានជោគជ័យ!»`,
   ];
 
-  const progressivePhrasesEn = [
-    `"Look closely ahead! A crucial new development is unfolding in ${cleanTitle}!"`,
-    `"We are venturing deeper into the core of this quest, stay sharp and observe!"`,
-    `"Witness this incredible moment right before our eyes as events progress!"`,
-    `"The momentum is building! This next step is the pivotal turning point!"`,
-    `"We are mastering each phase of the journey, the resolution is in sight!"`,
-    `"Observe the surroundings closely, everything is coming together seamlessly!"`,
+  const generalProgressiveEn = [
+    `"Examine this breakthrough! It directly links us to the next crucial step!"`,
+    `"The challenge is deepening, maintain composure and follow the operational plan!"`,
+    `"The momentum is shifting rapidly, let's combine our focus right now!"`,
+    `"There's no hesitation left! This pivotal maneuver changes the outcome of everything!"`,
+    `"The final resolution is within reach! One more decisive move and we prevail!"`,
   ];
 
-  const midIdx = (sceneNumber - 2) % progressivePhrasesKhmer.length;
-  return isKhmer ? progressivePhrasesKhmer[midIdx] : progressivePhrasesEn[midIdx];
+  const midIdx = (sceneNumber - 2) % generalProgressiveKhmer.length;
+  return isKhmer ? generalProgressiveKhmer[midIdx] : generalProgressiveEn[midIdx];
+}
+
+/**
+ * Builds sequential narrative beats ensuring an unbroken cause-and-effect progression
+ * across scenes from Shot 1 to Shot N.
+ */
+export function buildSequentialNarrativeBeat(
+  sceneNumber: number,
+  totalScenes: number,
+  title: string,
+  description: string,
+  characterName: string = 'តួអង្គសំខាន់',
+  isDialogue: boolean = true
+): NarrativeBeat {
+  const cleanChar = characterName || 'តួអង្គសំខាន់';
+  const cleanTitle = (title || 'ដំណើររឿង').trim();
+  const cleanDesc = (description || '').trim();
+
+  if (sceneNumber === 1) {
+    return {
+      phaseTitleKhmer: 'បើកឆាក និងជួបប្រទះហេតុការណ៍ដំបូង',
+      phaseTitleEnglish: 'Inciting Incident & Environment Introduction',
+      actionDescKhmer: `បង្ហាញពីវត្តមានដំបូងរបស់ ${cleanChar} នៅក្នុងបរិយាកាស ${cleanDesc || cleanTitle}។ តួអង្គឈានជើងចូលក្នុងទីតាំងដោយការប្រុងប្រយ័ត្ន ក្រឡេកមើលជុំវិញ ហើយប្រទះឃើញសញ្ញាដំបូងនៃបញ្ហាដែលត្រូវដោះស្រាយ។`,
+      actionDescEnglish: `First introduction of ${cleanChar} within the setting of ${cleanDesc || cleanTitle}. The character steps forward with keen alertness, observing the surroundings and discovering the catalyst event of the story.`,
+      continuityKhmer: `ចាក់សោរអត្តសញ្ញាណតួអង្គ ${cleanChar} មុខមាត់ ភ្នែក សក់ សម្លៀកបំពាក់ ១០០% ដដែល។ ដៃទទេតាមធម្មជាតិ មិនកាន់វត្ថុអ្វីឡើយ។`,
+      continuityEnglish: `Strict 100% facial features, eye shape, hairstyle, and clothing consistency for ${cleanChar}. Hands naturally free and empty by default.`,
+      cameraKhmer: 'ចលនាកាមេរ៉ារំកិលយឺតៗចូលជិត បង្ហាញទិដ្ឋភាពទូទៅរួមផ្សំជាមួយប្លង់មធ្យម',
+      cameraEnglish: 'Slow cinematic pan-in from establishing wide shot into a focused medium shot'
+    };
+  }
+
+  if (sceneNumber === totalScenes) {
+    return {
+      phaseTitleKhmer: 'ចំណុចកំពូល និងការសម្រេចគោលដៅជោគជ័យ',
+      phaseTitleEnglish: 'Climactic Resolution & Triumph',
+      actionDescKhmer: `បន្តផ្ទាល់ពីឈុតមុនបន្ទាប់ពីការតស៊ូដ៏ស្វិតស្វាញ ${cleanChar} ឈានដល់ដំណោះស្រាយចុងក្រោយនៃដំណើររឿង។ ដោយរក្សាសម្លៀកបំពាក់ និងទឹកមុខដដែល តួអង្គក្រឡេកមើលជុំវិញដោយក្តីសង្ឃឹម និងស្នាមញញឹមជ័យជម្នះ។`,
+      actionDescEnglish: `Continuing directly from the previous scene after intense efforts, ${cleanChar} achieves the final resolution. Retaining identical appearance and attire, gazing outward with triumphant relief and renewed hope.`,
+      continuityKhmer: `រក្សាតួអង្គ ${cleanChar} ទាំងសម្លៀកបំពាក់ ម៉ូតសក់ និងលក្ខណៈសម្គាល់ដដែល ១០០% ភ្ជាប់ពីឈុតមុនដោយគ្មាន jump-cut។`,
+      continuityEnglish: `Lock 100% identical clothing, hairstyle, and character model for ${cleanChar}, seamless continuity with zero jump cuts.`,
+      cameraKhmer: 'ចលនាកាមេរ៉ាប្លង់ទាបដកថយក្រោយយឺតៗ បង្ហាញទិដ្ឋភាពវីរភាពដ៏អស្ចារ្យ',
+      cameraEnglish: 'Cinematic low-angle tracking shot pulling back slowly into a wide epic view'
+    };
+  }
+
+  // Intermediate scenes: progressive narrative steps
+  const progressRatio = sceneNumber / totalScenes;
+
+  if (progressRatio <= 0.4) {
+    return {
+      phaseTitleKhmer: `ឈុតទី ${sceneNumber}៖ ការឆ្លើយតប និងស្វែងរកតម្រុយបន្ត`,
+      phaseTitleEnglish: `Shot ${sceneNumber}: Investigation & First Clue Discovery`,
+      actionDescKhmer: `បន្តផ្ទាល់ពីឈុតមុនដោយគ្មានការកាត់ចោល ${cleanChar} ឈានជើងចូលទៅកាន់ចំណុចកណ្តាលនៃ ${cleanDesc || 'ទីតាំង'} ដើម្បីពិនិត្យមើលតម្រុយ និងរៀបចំយុទ្ធសាស្ត្រដោះស្រាយ។`,
+      actionDescEnglish: `Continuing immediately from the preceding moment without jump cuts, ${cleanChar} steps toward the center of the setting to inspect critical clues and formulate a strategy.`,
+      continuityKhmer: `រក្សាតួអង្គ ${cleanChar} សម្លៀកបំពាក់ដដែល ម៉ូតសក់ដដែល បន្តចលនាពីឈុតមុនយ៉ាងរលូន។`,
+      continuityEnglish: `Maintain identical attire, hairstyle, and props for ${cleanChar}, carrying forward motion seamlessly from previous shot.`,
+      cameraKhmer: 'ចលនាកាមេរ៉ារំកិលតាមដានសកម្មភាពតួអង្គពីចំហៀងយ៉ាងរលូន',
+      cameraEnglish: 'Smooth lateral tracking shot following the character motion with shallow depth of field'
+    };
+  } else if (progressRatio <= 0.7) {
+    return {
+      phaseTitleKhmer: `ឈុតទី ${sceneNumber}៖ ដំណើររឿងឈានចូលជ្រៅ និងឧបសគ្គស្មុគស្មាញ`,
+      phaseTitleEnglish: `Shot ${sceneNumber}: Deepening Conflict & Rising Stakes`,
+      actionDescKhmer: `បន្តពីឈុតមុនបន្ទាប់ពីបានរកឃើញតម្រុយ ស្រាប់តែឧបសគ្គថ្មីមួយបានលេចឡើងចំពោះមុខ ${cleanChar}។ តួអង្គប្រឈមមុខនឹងស្ថានភាពតានតឹងដោយទឹកមុខម៉ឺងម៉ាត់ និងប្រុងប្រយ័ត្នខ្ពស់។`,
+      actionDescEnglish: `Picking up immediately from the discovery, a sudden new complication confronts ${cleanChar}. The character responds to the escalating tension with intense focus and tactical caution.`,
+      continuityKhmer: `ចាក់សោររូបរាងតួអង្គ ${cleanChar} ដដែល ១០០% ស្របតាមបរិយាកាស និងពន្លឺនៃឈុតមុន។`,
+      continuityEnglish: `Strict 100% character face and wardrobe consistency for ${cleanChar}, matching environmental lighting and atmosphere.`,
+      cameraKhmer: 'ចលនាកាមេរ៉ារំកិលរង្វិលជុំវិញតួអង្គ បង្កើនភាពរំភើបនិងជម្រៅរូបភាព',
+      cameraEnglish: 'Dynamic orbital camera arc intensifying spatial tension and emotional stakes'
+    };
+  } else {
+    return {
+      phaseTitleKhmer: `ឈុតទី ${sceneNumber}៖ ចំណុចរបត់ និងការប្តេជ្ញាចិត្តវាយលុក`,
+      phaseTitleEnglish: `Shot ${sceneNumber}: Decisive Turning Point & Climax Setup`,
+      actionDescKhmer: `បន្តផ្ទាល់ពីការប្រឈមមុខនៃឈុតមុន ${cleanChar} ប្រមូលកម្លាំងទាំងអស់ដើម្បីធ្វើសកម្មភាពដ៏ម៉ឺងម៉ាត់ ដោះស្រាយបញ្ហាស្នូលនៃដំណើររឿងមុនពេលឈានដល់ទីបញ្ចប់។`,
+      actionDescEnglish: `Flowing directly from the standoff in the previous scene, ${cleanChar} executes a bold, decisive maneuver to overcome the core challenge before the final outcome.`,
+      continuityKhmer: `រក្សាតួអង្គ ${cleanChar} ទាំងស្រុង គ្មានការផ្លាស់ប្តូររូបរាង ឬពណ៌សម្លៀកបំពាក់ឡើយ។`,
+      continuityEnglish: `Full continuity lock for ${cleanChar}, preserving exact clothing colors and facial expressions.`,
+      cameraKhmer: 'ចលនាកាមេរ៉ារុញចូលជិតយ៉ាងលឿន (Crash Zoom / Push-in) ផ្តោតលើការប្តេជ្ញាចិត្តនៃក្រសែភ្នែក',
+      cameraEnglish: 'Fast cinematic push-in focusing closely on the character determined gaze and resolute stance'
+    };
+  }
 }

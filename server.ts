@@ -5,7 +5,8 @@ import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { SUPPORTED_LANGUAGES, getLanguageById, buildContextualDialogue } from './src/languageConfig';
+import { SUPPORTED_LANGUAGES, getLanguageById, buildContextualDialogue, buildSequentialNarrativeBeat } from './src/languageConfig';
+import { buildFlowAiPrompt, cleanRawPromptForFlowAi } from './src/utils/flowAiPrompt';
 
 dotenv.config();
 
@@ -50,6 +51,57 @@ const getGeminiClient = () => {
     },
   });
 };
+
+const CANDIDATE_GEMINI_MODELS = ['gemini-3.8-flash', 'gemini-flash-latest', 'gemini-3.1-flash-lite'];
+
+async function callGeminiWithRetry(
+  ai: GoogleGenAI,
+  params: {
+    contents: string;
+    config?: any;
+  }
+): Promise<any> {
+  let lastError: any = null;
+
+  for (const model of CANDIDATE_GEMINI_MODELS) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        console.log(`[Gemini API] Requesting model "${model}" (attempt ${attempt})...`);
+        const response = await ai.models.generateContent({
+          model,
+          contents: params.contents,
+          config: params.config,
+        });
+
+        if (response && response.text) {
+          console.log(`[Gemini API] Successfully generated with model "${model}"`);
+          return response;
+        }
+      } catch (err: any) {
+        lastError = err;
+        const errStr = String(err?.message || err?.status || JSON.stringify(err));
+        const isUnavailable =
+          errStr.includes('503') ||
+          errStr.includes('UNAVAILABLE') ||
+          errStr.includes('high demand') ||
+          errStr.includes('Spikes in demand');
+        const isRateLimit = errStr.includes('429') || errStr.includes('RESOURCE_EXHAUSTED');
+
+        console.warn(`[Gemini API] Issue on model "${model}" (attempt ${attempt}):`, errStr);
+
+        if (attempt === 1 && (isUnavailable || isRateLimit)) {
+          // Quick wait before 1 retry on the same model
+          await new Promise((resolve) => setTimeout(resolve, 1200));
+        } else {
+          // Immediately try the next candidate model
+          break;
+        }
+      }
+    }
+  }
+
+  throw lastError || new Error('All Gemini model candidates are currently experiencing high demand.');
+}
 
 interface GenerateRequestBody {
   title: string;
@@ -106,14 +158,15 @@ function buildFallbackScenes(body: GenerateRequestBody) {
     };
     const timeRange = `${formatTime(startSec)} - ${formatTime(endSec)}`;
 
-    let phaseTitle = '';
-    let actionDesc = '';
-    let cameraMotion = '';
-
     // Contextual Dialogue dynamically generated based on title, description, and scene progression
     const spokenDialogue = isWithDialogue
       ? buildContextualDialogue(title, description, i, count, characterSpokenLanguage, characters)
       : '';
+
+    let phaseTitle = '';
+    let actionDesc = '';
+    let cameraMotion = '';
+    let continuityText = '';
 
     if (isAlphabet) {
       const alphabetLetter = String.fromCharCode(65 + ((i - 1) % 26));
@@ -121,59 +174,32 @@ function buildFallbackScenes(body: GenerateRequestBody) {
         phaseTitle = `រៀនអក្សរ ${alphabetLetter} (${alphabetLetter} is for ...)`;
         actionDesc = `${characters} បង្ហាញនិងបញ្ចេញសំឡេងអក្សរ ${alphabetLetter} ដោយក្តីរីករាយ និងចង្អុលទៅកាន់វត្ថុតំណាងអក្សរនេះយ៉ាងរស់រវើកក្នុងទិដ្ឋភាព ${description}។`;
         cameraMotion = `ចលនាកាមេរ៉ារំកិលចូលជិត ផ្តោតលើតួអង្គនិងអក្សរ ${alphabetLetter}`;
+        continuityText = `រក្សាតួអង្គ ${characters} មុខមាត់ សម្លៀកបំពាក់ ម៉ូតសក់ដដែល ១០០% តភ្ជាប់ពីអក្សរមុន។`;
       } else {
         phaseTitle = `Learning Letter ${alphabetLetter}`;
         actionDesc = `${characters} cheerfully introduces and pronounces Letter ${alphabetLetter}, interacting directly with the object representing this letter in the setting of ${description}.`;
         cameraMotion = `Cinematic medium close-up pan-in focusing on character presenting Letter ${alphabetLetter}`;
-      }
-    } else if (i === 1) {
-      if (isKhmerPrompt) {
-        phaseTitle = 'ផ្តើមរឿង និងបង្ហាញវត្តមានតួអង្គ';
-        actionDesc = isWithDialogue
-          ? `បង្ហាញពីវត្តមានដំបូងរបស់ ${characters} នៅក្នុងទិដ្ឋភាព ${description || 'នៃដំណើររឿង'}។ តួអង្គឈានជើងចូលក្នុងបរិយាកាសដោយការប្រុងប្រយ័ត្ន ក្រឡេកមើលជុំវិញដោយអារម្មណ៍ភ្ញាក់ផ្អើល។`
-          : `បង្ហាញពីវត្តមានដំបូងរបស់ ${characters} នៅក្នុងទិដ្ឋភាព ${description || 'នៃដំណើររឿង'}។ [ឈុតគ្មានការនិយាយ] តួអង្គឈានជើងចូលក្នុងបរិយាកាសដោយស្ងប់ស្ងាត់ ប្រុងប្រយ័ត្ន សម្តែងតាមរយៈកាយវិការ ទឹកមុខ និងចលនាដកដង្ហើមស្ងប់ស្ងាត់។`;
-        cameraMotion = 'ចលនាកាមេរ៉ារំកិលយឺតៗចូលជិត បង្ហាញទិដ្ឋភាពទូទៅរួមផ្សំជាមួយប្លង់មធ្យម';
-      } else {
-        phaseTitle = 'Opening Scene & Character Introduction';
-        actionDesc = isWithDialogue
-          ? `First appearance of ${characters} in the setting of ${description || 'the story'}. The character carefully steps forward into the environment, looking around with alert curiosity.`
-          : `First appearance of ${characters} in the setting of ${description || 'the story'}. [SILENT SCENE - NO DIALOGUE / ZERO SPEECH]: Pure visual storytelling through expressive body language, focused facial expression, and steady deliberate movement without speaking.`;
-        cameraMotion = 'Slow cinematic pan-in, establishing wide shot transitioning into medium shot';
-      }
-    } else if (i === count) {
-      if (isKhmerPrompt) {
-        phaseTitle = 'ចំណុចកំពូល និងការសម្រេចគោលដៅ';
-        actionDesc = isWithDialogue
-          ? `${characters} ឈានដល់ដំណោះស្រាយដ៏សំខាន់ ដោយរក្សាសម្លៀកបំពាក់និងទឹកមុខដដែល ក្រឡេកមើលទៅកាន់ទិសដៅខាងមុខដោយក្តីសង្ឃឹម និងស្នាមញញឹមជ័យជម្នះ។`
-          : `${characters} ឈានដល់ដំណោះស្រាយដ៏សំខាន់នៃដំណើររឿង (គ្មានការនិយាយ) ដោយរក្សាសម្លៀកបំពាក់និងទឹកមុខដដែល ក្រឡេកមើលទៅកាន់ទិសដៅខាងមុខដោយក្តីសង្ឃឹម និងស្នាមញញឹមជ័យជម្នះ តាមរយៈអារម្មណ៍ជ្រាលជ្រៅនៃក្រសែភ្នែក។`;
-        cameraMotion = 'ចលនាកាមេរ៉ាប្លង់ទាបដកថយក្រោយយឺតៗ បង្ហាញទិដ្ឋភាពវីរភាពដ៏អស្ចារ្យ';
-      } else {
-        phaseTitle = 'Climax & Story Resolution';
-        actionDesc = isWithDialogue
-          ? `${characters} reaches the critical story resolution, maintaining identical clothing and emotional expression, looking forward with determination and hopeful resolve.`
-          : `${characters} reaches the critical story resolution [SILENT SCENE - NO DIALOGUE]. Maintaining identical clothing and appearance, gazing forward with deep cinematic determination and emotional triumph purely through ocular focus and posture.`;
-        cameraMotion = 'Cinematic low-angle tracking shot pulling back slowly into a dramatic heroic view';
+        continuityText = `Lock character ${characters} face, clothing, and seamless educational continuity.`;
       }
     } else {
+      const beat = buildSequentialNarrativeBeat(i, count, title, description, characters, isWithDialogue);
       if (isKhmerPrompt) {
-        phaseTitle = `ដំណើររឿងបន្តបន្ទាប់ទី ${i}`;
-        actionDesc = isWithDialogue
-          ? `តួអង្គ ${characters} បន្តសកម្មភាពពីវគ្គមុនភ្លាមៗដោយគ្មានការកាត់ចោល។ កំពុងប្រឈមមុខនឹងឧបសគ្គនៅក្នុង ${description} ដោយទឹកមុខម៉ឺងម៉ាត់។`
-          : `តួអង្គ ${characters} បន្តសកម្មភាពពីវគ្គមុនភ្លាមៗដោយគ្មានការកាត់ចោល។ (គ្មានការនិយាយ) កំពុងប្រឈមមុខនឹងឧបសគ្គនៅក្នុង ${description} ដោយការប្រុងប្រយ័ត្នខ្ពស់ ឆ្លើយតបដោយសកម្មភាពរហ័សរហួន និងកាយវិការជំនាញ។`;
-        cameraMotion = 'ចលនាកាមេរ៉ារំកិលតាមដានសកម្មភាពតួអង្គយ៉ាងរលូន មានជម្រៅរូបភាពភាពយន្តច្បាស់លាស់';
+        phaseTitle = beat.phaseTitleKhmer;
+        actionDesc = beat.actionDescKhmer;
+        cameraMotion = beat.cameraKhmer;
+        continuityText = beat.continuityKhmer;
       } else {
-        phaseTitle = `Sequential Continuation Scene ${i}`;
-        actionDesc = isWithDialogue
-          ? `Character ${characters} seamlessly continues action from previous shot without jump cuts, actively navigating through ${description} with resolute focus.`
-          : `Character ${characters} seamlessly continues action from previous shot without jump cuts. [SILENT ACTION - NO DIALOGUE]: Navigating through ${description} purely through agile physical maneuvers, tense eye contact, and focused tactical action.`;
-        cameraMotion = 'Smooth tracking shot following the characters continuous motion, cinematic depth of field';
+        phaseTitle = beat.phaseTitleEnglish;
+        actionDesc = beat.actionDescEnglish;
+        cameraMotion = beat.cameraEnglish;
+        continuityText = beat.continuityEnglish;
       }
     }
 
     let dialogueLine = '';
     if (isWithDialogue) {
       if (isKhmerPrompt) {
-        dialogueLine = `• ${pLang.dialogueLabel}៖ តួអង្គនិយាយជា${sLang.nameKhmer} (${sLang.nameEnglish})៖ ${spokenDialogue} ដោយមានចលនាបបូរមាត់ត្រូវគ្នា និងទឹកមុខរស់រវើក។`;
+        dialogueLine = `• ${pLang.dialogueLabel}៖ តួអង្គនិយាយជា${sLang.nameKhmer} (${sLang.nameEnglish})៖ ${spokenDialogue} ដោយមានចលនាបបូរមាត់ត្រូវគ្នា និងទឹកមុខរស់រវើកតាមសាច់រឿង។`;
       } else {
         dialogueLine = `• ${pLang.dialogueLabel}: Character speaks in ${sLang.nameEnglish} (${sLang.nameKhmer}): ${spokenDialogue} with synchronized lip movement, natural vocal cadence, and expressive facial performance.`;
       }
@@ -187,7 +213,7 @@ function buildFallbackScenes(body: GenerateRequestBody) {
 ${timeRange} (${durationPerPromptSeconds} វិនាទី)
 • ${pLang.cameraLabel}៖ ${cameraMotion}
 • ${pLang.actionLabel}៖ ${actionDesc}
-• ${pLang.continuityLabel}៖ រក្សាតួអង្គ ${characters} មុខមាត់ សម្លៀកបំពាក់ ម៉ូតសក់ដដែល ១០០% គ្មានការប្រែប្រួល និងតភ្ជាប់សាច់រឿងបន្តពីឈុតមុនយ៉ាងរលូន។
+• ${pLang.continuityLabel}៖ ${continuityText}
 ${dialogueLine}
 • ${pLang.lightingLabel}៖ ${visualStyle}, រូបភាពភាពយន្តកម្រិតខ្ពស់, ពន្លឺធម្មជាតិច្បាស់ត្រជាក់ភ្នែក`;
     } else {
@@ -195,10 +221,20 @@ ${dialogueLine}
 ${timeRange} (${durationPerPromptSeconds}s)
 • ${pLang.cameraLabel}: ${cameraMotion}
 • ${pLang.actionLabel}: ${actionDesc}
-• ${pLang.continuityLabel}: Continuous identical character throughout all shots: ${characters}, same facial features, matching hairstyle, identical clothing and colors. Seamless narrative progression from previous shot with zero jump cuts.
+• ${pLang.continuityLabel}: ${continuityText}
 ${dialogueLine}
-• ${pLang.lightingLabel}: ${visualStyle}, Cinematic 8K, photorealistic masterpiece, 35mm anamorphic lens, dramatic volumetric lighting, highly detailed textures.`;
+• ${pLang.lightingLabel}: ${visualStyle}, Cinematic 8K, photorealistic masterpiece, 35mm lens, dramatic volumetric lighting.`;
     }
+
+    const flowAiPrompt = buildFlowAiPrompt({
+      actionDesc,
+      cameraMotion,
+      characters,
+      visualStyle,
+      dialogue: isWithDialogue ? spokenDialogue : '',
+      sceneNumber: i,
+      isKhmer: isKhmerPrompt
+    });
 
     scenes.push({
       sceneNumber: i,
@@ -209,12 +245,11 @@ ${dialogueLine}
       sceneStoryKhmer: actionDesc,
       aiVideoPrompt: aiPrompt,
       visual_prompt: aiPrompt,
+      flow_ai_prompt: flowAiPrompt,
       dialogue: isWithDialogue ? spokenDialogue : '[SILENT SCENE - NO DIALOGUE]',
       voiceover: actionDesc,
       cameraMotion,
-      continuityNotes: isKhmerPrompt
-        ? `រក្សាតួអង្គ ${characters} សម្លៀកបំពាក់ដដែល ម៉ូតសក់ដដែល និងបន្តទីតាំងពីឈុតមុន។ (${isWithDialogue ? `និយាយ${sLang.nameKhmer}` : 'គ្មានការនិយាយ'})`
-        : `Lock character ${characters} identical clothing, hair, and seamless progression. (${isWithDialogue ? `Spoken in ${sLang.nameEnglish}` : 'Silent Scene'})`
+      continuityNotes: continuityText
     });
   }
 
@@ -292,13 +327,15 @@ MANDATORY RULES FOR STORY & CONTEXTUAL DIALOGUE GENERATION:
    - FORBIDDEN to repeat identical or similar dialogue lines across scenes.
    - The dialogue MUST dynamically change and progress from one scene to the next based on the unfolding story.
 
-4. DUAL-LANGUAGE SYSTEM:
-   - "PROMPT LANGUAGE" (FOR VISUALS & SCENE STRUCTURE): "${selectedPromptLangObj.nameEnglish}" (${selectedPromptLangObj.label}).
-     * The visual prompt string ("visual_prompt") MUST be written in ${selectedPromptLangObj.nameEnglish}.
-   - "CHARACTER SPOKEN LANGUAGE" (FOR SPOKEN DIALOGUE & SPEECH): "${selectedSpokenLangObj.nameEnglish}" (${selectedSpokenLangObj.label}).
-     * When dialogueMode === "with_dialogue":
-       - The characters' spoken dialogue line in the "dialogue" field MUST BE WRITTEN IN ${selectedSpokenLangObj.nameEnglish} (${selectedSpokenLangObj.label}).
-       - Also embedded inside the visual_prompt's Dialogue & Audio bullet.
+4. STRICT DUAL-LANGUAGE ISOLATION SYSTEM (បែងចែកភាសា Prompt និងភាសានិយាយឱ្យដាច់ពីគ្នា ១០០%):
+   - "PROMPT LANGUAGE" (FOR ALL VISUAL PROMPTS, ACTIONS, CAMERA, LIGHTING, CONTINUITY & FLOW_AI_PROMPT): "${selectedPromptLangObj.nameEnglish}" (${selectedPromptLangObj.label}).
+     * ALL narrative actions, camera movements, continuity descriptions, visual styles, and prompt framing in "visual_prompt" and "flow_ai_prompt" MUST BE WRITTEN ENTIRELY IN ${selectedPromptLangObj.nameEnglish}!
+   - "CHARACTER SPOKEN LANGUAGE" (FOR SPOKEN DIALOGUE ONLY): "${selectedSpokenLangObj.nameEnglish}" (${selectedSpokenLangObj.label}).
+     * ONLY the spoken words inside the quotation marks ("...") in the "dialogue" field and within the prompt MUST BE WRITTEN IN ${selectedSpokenLangObj.nameEnglish}!
+   - CRITICAL EXAMPLE:
+     * If Prompt Language is English and Character Spoken Language is Khmer:
+       The prompt result, actions, camera, style, and speech carrier sentence MUST BE 100% IN ENGLISH, and ONLY the spoken dialogue line inside quotes is in Khmer!
+       E.g.: 'Cinematic shot of the protagonist, hands naturally free and empty. The character looks at the phone screen discovering a fraudulent SMS. The character speaks expressively with synchronized lip movements: "[Khmer spoken dialogue in quotes]". Smooth cinematic medium tracking shot. Cinematic 8K, photorealistic masterpiece, 35mm lens, volumetric lighting.'
      * When dialogueMode === "without_dialogue":
        - "dialogue" field MUST BE "[SILENT SCENE - NO DIALOGUE]".
        - Storytelling is 100% non-verbal (facial expressions, eye contact, body gestures).
@@ -323,13 +360,25 @@ MANDATORY RULES FOR STORY & CONTEXTUAL DIALOGUE GENERATION:
    • ${selectedPromptLangObj.lightingLabel}: [${visualStyle}, Cinematic 8K, lighting, camera lens and style tags]
    `}
 
-6. OUTPUT JSON FORMAT:
+6. FLOW AI ERROR-FREE VIDEO PROMPT ("flow_ai_prompt"):
+   In addition to "visual_prompt", each scene object MUST provide a dedicated "flow_ai_prompt":
+   - STRICT FLOW AI & VIDEO GENERATOR COMPLIANCE:
+     * Flow AI directly rejects prompts containing bullet points, timestamps, shot headers, or excessive length!
+     * "flow_ai_prompt" MUST BE a SINGLE continuous, cohesive cinematic paragraph under 450-700 characters.
+     * ABSOLUTELY FORBIDDEN: NO bullet points (NO •, NO *), NO timestamps (NO 00:00 - 00:10), NO shot headers (NO "Shot 1:", NO "ឈុត 1:"), NO structural labels (NO "Camera Movement:", NO "Action:").
+     * Seamlessly combines: [Subject description with hands naturally free] + [Specific narrative action in this scene] + [Spoken dialogue embedded in quotes with lip movements] + [Camera motion] + [Visual style, atmosphere, and lighting].
+     * PROGRESSIVE STORYTELLING & NO REPETITION: Every single shot MUST have unique progressive narrative action and unique dialogue advancing the story. FORBIDDEN to repeat identical or generic prompts across scenes!
+     * DIALOGUE INTEGRATION: When dialogue is present, embed it directly into the paragraph: e.g. 'The character speaks expressively with synchronized lip movements: "[Dialogue]"' or 'តួអង្គនិយាយដោយទឹកមុខរស់រវើក និងចលនាបបូរមាត់ត្រូវគ្នា៖ «[Dialogue]»។'.
+     * Guarantees 0% error when pasted into Flow AI, Kling AI, Runway Gen-3, Luma Dream Machine, or Sora.
+
+7. OUTPUT JSON FORMAT:
    You MUST return a JSON Array of exactly ${sceneCount} Scene objects:
    [
      {
        "scene_number": 1,
        "title_context": "${title}",
        "visual_prompt": "[All-in-one complete prompt string]",
+       "flow_ai_prompt": "[Single cohesive cinematic paragraph under 700 characters with action, dialogue in quotes, camera and style, zero bullets, zero timestamps, and zero headers]",
        "dialogue": "[Exact contextual spoken dialogue line in ${selectedSpokenLangObj.nameEnglish} matching the visual action, or empty if silent]",
        "voiceover": "[Voiceover narration or audio soundscape description in ${selectedPromptLangObj.nameEnglish}]"
      }
@@ -354,14 +403,14 @@ Generate exactly ${sceneCount} scenes in a JSON Array matching the requested sch
     "scene_number": 1,
     "title_context": "${title}",
     "visual_prompt": "...",
+    "flow_ai_prompt": "...",
     "dialogue": "...",
     "voiceover": "..."
   }
 ]
 `;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
+    const response = await callGeminiWithRetry(ai, {
       contents: promptText,
       config: {
         systemInstruction,
@@ -407,12 +456,41 @@ Generate exactly ${sceneCount} scenes in a JSON Array matching the requested sch
         return `${mins}:${secs}`;
       };
       const timeRange = s.timeRange || `${formatTime(startSec)} - ${formatTime(endSec)}`;
-      const visPrompt = (s.visual_prompt || s.aiVideoPrompt || '').trim();
+      let visPrompt = (s.visual_prompt || s.aiVideoPrompt || '').trim();
       const diag = (s.dialogue || '').trim();
       const vo = (s.voiceover || s.sceneStoryKhmer || '').trim();
+
+      // Ensure spoken dialogue is seamlessly unified inside visPrompt if not already present
+      if (diag && diag !== '[SILENT SCENE - NO DIALOGUE]' && !visPrompt.includes(diag)) {
+        if (selectedPromptLangObj.id === 'khmer') {
+          visPrompt += `\n• ${selectedPromptLangObj.dialogueLabel}៖ ${diag}`;
+        } else {
+          visPrompt += `\n• ${selectedPromptLangObj.dialogueLabel}: Character speaks in ${selectedSpokenLangObj.nameEnglish}: "${diag}"`;
+        }
+      }
+
       const sceneTitle = s.title_context
         ? `${selectedPromptLangObj.shotLabel} ${num}: ${s.title_context}`
         : (s.sceneTitleKhmer || `${selectedPromptLangObj.shotLabel} ${num}`);
+
+      const isKhmerPrompt = selectedPromptLangObj.id === 'khmer';
+      const rawFlow = (s.flow_ai_prompt || '').trim();
+      let flowAiPrompt = rawFlow && !/[•▪►]/.test(rawFlow) && !/Shot\s*\d+\s*:/i.test(rawFlow) && !/ឈុត\s*\d+\s*:/i.test(rawFlow) && rawFlow.length <= 800
+        ? rawFlow
+        : cleanRawPromptForFlowAi(visPrompt, visualStyle, characters, isKhmerPrompt);
+
+      // Guarantee dialogue is embedded inside flowAiPrompt with lip-sync in quotes
+      if (diag && diag !== '[SILENT SCENE - NO DIALOGUE]' && !diag.includes('SILENT')) {
+        const cleanDiag = diag.replace(/^[«"'“\s]+|[»"'”\s]+$/g, '').trim();
+        if (cleanDiag && !flowAiPrompt.includes(cleanDiag)) {
+          if (isKhmerPrompt) {
+            flowAiPrompt += ` តួអង្គនិយាយដោយទឹកមុខរស់រវើក និងចលនាបបូរមាត់ត្រូវគ្នា៖ «${cleanDiag}»។`;
+          } else {
+            flowAiPrompt += ` The character speaks with natural emotion and synchronized lip movements: "${cleanDiag}".`;
+          }
+        }
+      }
+      flowAiPrompt = flowAiPrompt.replace(/\s+/g, ' ').trim();
 
       return {
         sceneNumber: num,
@@ -423,6 +501,7 @@ Generate exactly ${sceneCount} scenes in a JSON Array matching the requested sch
         sceneStoryKhmer: vo || diag || sceneTitle,
         aiVideoPrompt: visPrompt,
         visual_prompt: visPrompt,
+        flow_ai_prompt: flowAiPrompt,
         dialogue: diag,
         voiceover: vo,
         cameraMotion: s.cameraMotion || '',
@@ -438,9 +517,13 @@ Generate exactly ${sceneCount} scenes in a JSON Array matching the requested sch
       scenes: normalizedScenes
     });
   } catch (error) {
-    console.error('Error generating story prompts:', error);
+    console.warn('Gemini API high demand / error. Generating smart contextual scenes fallback:', error);
     const fallbackData = buildFallbackScenes(req.body);
-    return res.json(fallbackData);
+    return res.json({
+      ...fallbackData,
+      isFallback: true,
+      fallbackReason: 'Gemini model high demand (503)'
+    });
   }
 });
 
@@ -507,8 +590,7 @@ CRITICAL INSTRUCTIONS:
    - Do NOT use Markdown headers or bullet points. Output ONLY the story description paragraph in Khmer.
 `;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
+    const response = await callGeminiWithRetry(ai, {
       contents: promptText,
       config: {
         temperature: 0.7,
@@ -518,9 +600,13 @@ CRITICAL INSTRUCTIONS:
     const description = (response.text || '').trim();
     return res.json({ description: description || buildFallbackDescription(title, characters, dialogueMode, characterCount) });
   } catch (error) {
-    console.error('Error generating description:', error);
+    console.warn('Gemini API high demand / error. Generating smart description fallback:', error);
     const fallbackDesc = buildFallbackDescription(req.body.title || '', req.body.characters, req.body.dialogueMode || 'with_dialogue', req.body.characterCount || 1);
-    return res.json({ description: fallbackDesc });
+    return res.json({
+      description: fallbackDesc,
+      isFallback: true,
+      fallbackReason: 'Gemini model high demand (503)'
+    });
   }
 });
 

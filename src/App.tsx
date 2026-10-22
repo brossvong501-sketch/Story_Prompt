@@ -45,7 +45,8 @@ import {
   Plus,
   Edit3,
   SlidersHorizontal,
-  Type
+  Type,
+  Zap
 } from 'lucide-react';
 import {
   COLOR_CATEGORIES,
@@ -73,7 +74,8 @@ import {
   saveLatestActiveStory,
   getLatestActiveStory,
 } from './historyStorage';
-import { SUPPORTED_LANGUAGES, getLanguageById, buildContextualDialogue } from './languageConfig';
+import { SUPPORTED_LANGUAGES, getLanguageById, buildContextualDialogue, buildSequentialNarrativeBeat } from './languageConfig';
+import { buildFlowAiPrompt, cleanRawPromptForFlowAi, validateFlowAiPrompt } from './utils/flowAiPrompt';
 
 interface Scene {
   sceneNumber: number;
@@ -84,6 +86,7 @@ interface Scene {
   sceneStoryKhmer: string;
   aiVideoPrompt: string;
   visual_prompt?: string;
+  flow_ai_prompt?: string;
   dialogue?: string;
   voiceover?: string;
   cameraMotion: string;
@@ -1952,6 +1955,9 @@ export default function App() {
   const [copiedStoryIndex, setCopiedStoryIndex] = useState<number | null>(null);
   const [copiedAllIndex, setCopiedAllIndex] = useState<number | null>(null);
   const [copiedAll, setCopiedAll] = useState(false);
+  const [promptFormatMode, setPromptFormatMode] = useState<'flow_ai' | 'full'>('flow_ai');
+  const [copiedFlowAiIndex, setCopiedFlowAiIndex] = useState<number | null>(null);
+  const [copiedAllFlowAi, setCopiedAllFlowAi] = useState(false);
   const [toastMessage, setToastMessage] = useState<string>('');
   const [resultViewMode, setResultViewMode] = useState<'cards' | 'compact'>('cards');
   const [selectedSceneFilter, setSelectedSceneFilter] = useState<number | 'all'>(1);
@@ -2375,10 +2381,13 @@ export default function App() {
       let phaseTitle = '';
       let actionDesc = '';
       let cameraMotion = '';
-
-      // Contextual Dialogue dynamically generated based on title, description, and scene progression
+      let continuityText = '';
       const spokenDialogue = isWithDialogue
-        ? buildContextualDialogue(title, description, i, sceneCount, characterSpokenLanguage, charDesc)
+        ? (isAlphabet
+            ? (isKhmerPrompt
+                ? `«រៀនអក្សរ ${String.fromCharCode(65 + ((i - 1) % 26))} ទាំងអស់គ្នា! សប្បាយរីករាយក្នុងការបញ្ចេញសំឡេង!»`
+                : `"Let's learn Letter ${String.fromCharCode(65 + ((i - 1) % 26))} together! Repeat after me with excitement!"`)
+            : buildContextualDialogue(title, description, i, sceneCount, characterSpokenLanguage, charDesc))
         : '';
 
       if (isAlphabet) {
@@ -2387,59 +2396,32 @@ export default function App() {
           phaseTitle = `រៀនអក្សរ ${alphabetLetter} (${alphabetLetter} is for ...)`;
           actionDesc = `${charDesc} បង្ហាញនិងបញ្ចេញសំឡេងអក្សរ ${alphabetLetter} ដោយក្តីរីករាយ និងចង្អុលទៅកាន់វត្ថុតំណាងអក្សរនេះយ៉ាងរស់រវើកក្នុងទិដ្ឋភាព ${description}។`;
           cameraMotion = `ចលនាកាមេរ៉ារំកិលចូលជិត ផ្តោតលើតួអង្គនិងអក្សរ ${alphabetLetter}`;
+          continuityText = `រក្សាតួអង្គ ${charDesc} មុខមាត់ សម្លៀកបំពាក់ ម៉ូតសក់ដដែល ១០០% តភ្ជាប់ពីអក្សរមុន។`;
         } else {
           phaseTitle = `Learning Letter ${alphabetLetter}`;
           actionDesc = `${charDesc} cheerfully introduces and pronounces Letter ${alphabetLetter}, interacting directly with the object representing this letter in the setting of ${description}.`;
           cameraMotion = `Cinematic medium close-up pan-in focusing on character presenting Letter ${alphabetLetter}`;
-        }
-      } else if (i === 1) {
-        if (isKhmerPrompt) {
-          phaseTitle = 'ផ្តើមរឿង និងបង្ហាញវត្តមានតួអង្គ';
-          actionDesc = isWithDialogue
-            ? `បង្ហាញពីវត្តមានដំបូងរបស់ ${charDesc} នៅក្នុងទិដ្ឋភាព ${description}។ តួអង្គឈានជើងចូលក្នុងទីតាំងដោយការប្រុងប្រយ័ត្នខ្ពស់ ក្រឡេកមើលជុំវិញដោយអារម្មណ៍ភ្ញាក់ផ្អើល។`
-            : `បង្ហាញពីវត្តមានដំបូងរបស់ ${charDesc} នៅក្នុងទិដ្ឋភាព ${description}។ (ឈុតគ្មានការនិយាយ) តួអង្គឈានជើងចូលក្នុងទីតាំងដោយស្ងប់ស្ងាត់ ប្រុងប្រយ័ត្នខ្ពស់ សម្តែងតាមរយៈកាយវិការ ទឹកមុខ និងចលនាដកដង្ហើមស្ងប់ស្ងាត់។`;
-          cameraMotion = 'ចលនាកាមេរ៉ារំកិលយឺតៗចូលជិត បង្ហាញទិដ្ឋភាពទូទៅរួមផ្សំជាមួយប្លង់មធ្យម';
-        } else {
-          phaseTitle = 'Opening Scene & Character Introduction';
-          actionDesc = isWithDialogue
-            ? `First appearance of ${charDesc} in the setting of ${description}. The character carefully steps forward into the environment, looking around with alert curiosity.`
-            : `First appearance of ${charDesc} in the setting of ${description}. [SILENT SCENE - NO DIALOGUE / ZERO SPEECH]: Pure visual storytelling through expressive body language, focused facial expression, and steady deliberate movement without speaking.`;
-          cameraMotion = 'Slow cinematic pan-in, establishing wide shot transitioning into medium shot';
-        }
-      } else if (i === sceneCount) {
-        if (isKhmerPrompt) {
-          phaseTitle = 'ចំណុចកំពូល ឬការសម្រេចគោលដៅ';
-          actionDesc = isWithDialogue
-            ? `${charDesc} ឈានដល់ដំណោះស្រាយដ៏សំខាន់នៃដំណើររឿង ដោយរក្សាសម្លៀកបំពាក់និងទឹកមុខដដែល ក្រឡេកមើលទៅកាន់ទិសដៅខាងមុខដោយក្តីសង្ឃឹម និងស្នាមញញឹមជ័យជម្នះ។`
-            : `${charDesc} ឈានដល់ដំណោះស្រាយដ៏សំខាន់នៃដំណើររឿង (គ្មានការនិយាយ) ដោយរក្សាសម្លៀកបំពាក់និងទឹកមុខដដែល ក្រឡេកមើលទៅកាន់ទិសដៅខាងមុខដោយក្តីសង្ឃឹម និងស្នាមញញឹមជ័យជម្នះ តាមរយៈអារម្មណ៍ជ្រាលជ្រៅនៃក្រសែភ្នែក។`;
-          cameraMotion = 'ចលនាកាមេរ៉ាប្លង់ទាបដកថយក្រោយយឺតៗ បង្ហាញទិដ្ឋភាពវីរភាពដ៏អស្ចារ្យ';
-        } else {
-          phaseTitle = 'Climax & Story Resolution';
-          actionDesc = isWithDialogue
-            ? `${charDesc} reaches the critical story resolution, maintaining identical clothing and facial expression, looking forward with determination and hopeful resolve.`
-            : `${charDesc} reaches the critical story resolution [SILENT SCENE - NO DIALOGUE]. Maintaining identical clothing and appearance, gazing forward with deep cinematic determination and emotional triumph purely through ocular focus and posture.`;
-          cameraMotion = 'Dramatic low-angle tracking shot pulling back slowly into a wide epic view';
+          continuityText = `Lock character ${charDesc} face, clothing, and seamless educational continuity.`;
         }
       } else {
+        const beat = buildSequentialNarrativeBeat(i, sceneCount, title, description, charDesc, isWithDialogue);
         if (isKhmerPrompt) {
-          phaseTitle = `ដំណើររឿងភាគបន្តបន្ទាប់ទី ${i}`;
-          actionDesc = isWithDialogue
-            ? `តួអង្គ ${charDesc} បន្តសកម្មភាពពីឈុតមុនភ្លាមៗដោយគ្មានការកាត់ចោល។ កំពុងប្រឈមមុខនឹងឧបសគ្គនៅក្នុងបរិយាកាស ${description} ដោយទឹកមុខម៉ឺងម៉ាត់។`
-            : `តួអង្គ ${charDesc} បន្តសកម្មភាពពីឈុតមុនភ្លាមៗដោយគ្មានការកាត់ចោល។ (គ្មានការនិយាយ) កំពុងប្រឈមមុខនឹងឧបសគ្គនៅក្នុងបរិយាកាស ${description} ដោយការប្រុងប្រយ័ត្នខ្ពស់ ឆ្លើយតបដោយសកម្មភាពរហ័សរហួន និងកាយវិការជំនាញ។`;
-          cameraMotion = 'ចលនាកាមេរ៉ារំកិលតាមដានសកម្មភាពតួអង្គយ៉ាងរលូន មានជម្រៅរូបភាពភាពយន្តច្បាស់លាស់';
+          phaseTitle = beat.phaseTitleKhmer;
+          actionDesc = beat.actionDescKhmer;
+          cameraMotion = beat.cameraKhmer;
+          continuityText = beat.continuityKhmer;
         } else {
-          phaseTitle = `Sequential Continuation Scene ${i}`;
-          actionDesc = isWithDialogue
-            ? `Character ${charDesc} seamlessly continues action from previous shot without jump cuts, actively navigating through ${description} with resolute focus.`
-            : `Character ${charDesc} seamlessly continues action from previous shot without jump cuts. [SILENT ACTION - NO DIALOGUE]: Navigating through ${description} purely through agile physical maneuvers, tense eye contact, and focused tactical action.`;
-          cameraMotion = 'Smooth continuous tracking shot following character motion with cinematic depth of field';
+          phaseTitle = beat.phaseTitleEnglish;
+          actionDesc = beat.actionDescEnglish;
+          cameraMotion = beat.cameraEnglish;
+          continuityText = beat.continuityEnglish;
         }
       }
 
       let dialogueLine = '';
       if (isWithDialogue) {
         if (isKhmerPrompt) {
-          dialogueLine = `• ${pLang.dialogueLabel}៖ តួអង្គនិយាយជា${sLang.nameKhmer} (${sLang.nameEnglish})៖ ${spokenDialogue} ដោយមានចលនាបបូរមាត់ត្រូវគ្នា និងទឹកមុខរស់រវើក។`;
+          dialogueLine = `• ${pLang.dialogueLabel}៖ តួអង្គនិយាយជា${sLang.nameKhmer} (${sLang.nameEnglish})៖ ${spokenDialogue} ដោយមានចលនាបបូរមាត់ត្រូវគ្នា និងទឹកមុខរស់រវើកតាមសាច់រឿង។`;
         } else {
           dialogueLine = `• ${pLang.dialogueLabel}: Character speaks in ${sLang.nameEnglish} (${sLang.nameKhmer}): ${spokenDialogue} with synchronized lip movement, natural vocal cadence, and expressive facial performance.`;
         }
@@ -2453,7 +2435,7 @@ export default function App() {
 ${timeRange} (${durationPerPrompt} វិនាទី)
 • ${pLang.cameraLabel}៖ ${cameraMotion}
 • ${pLang.actionLabel}៖ ${actionDesc}
-• ${pLang.continuityLabel}៖ ដៃទទេតាមធម្មជាតិ មិនកាន់វត្ថុអ្វីឡើយ (លុះត្រាតែសកម្មភាពសាច់រឿងបង្កើតមកឱ្យកាន់)។ រក្សាតួអង្គ ${charDesc} មុខមាត់ សម្លៀកបំពាក់ និងម៉ូតសក់ដដែល ១០០% គ្មានការប្រែប្រួល និងតភ្ជាប់សាច់រឿងបន្តពីឈុតមុនយ៉ាងរលូន។
+• ${pLang.continuityLabel}៖ ${continuityText}
 ${dialogueLine}
 • ${pLang.lightingLabel}៖ ${visualStyle}, រូបភាពភាពយន្តកម្រិតខ្ពស់, ពន្លឺធម្មជាតិច្បាស់ត្រជាក់ភ្នែក`;
       } else {
@@ -2461,10 +2443,20 @@ ${dialogueLine}
 ${timeRange} (${durationPerPrompt}s)
 • ${pLang.cameraLabel}: ${cameraMotion}
 • ${pLang.actionLabel}: ${actionDesc}
-• ${pLang.continuityLabel}: Strict 100% character face, facial features, hair, and clothing consistency for ${charDesc}. Hands are naturally free and empty by default without holding any props unless specifically dictated by the scene narrative. Seamless visual continuity from previous shot with zero jump cuts.
+• ${pLang.continuityLabel}: ${continuityText}
 ${dialogueLine}
 • ${pLang.lightingLabel}: ${visualStyle}, Cinematic 8K, photorealistic masterpiece, 35mm lens, dramatic volumetric lighting.`;
       }
+
+      const fallbackFlowAi = buildFlowAiPrompt({
+        actionDesc,
+        cameraMotion,
+        characters: charDesc,
+        visualStyle,
+        dialogue: isWithDialogue ? spokenDialogue : '',
+        sceneNumber: i,
+        isKhmer: isKhmerPrompt
+      });
 
       scenes.push({
         sceneNumber: i,
@@ -2475,12 +2467,11 @@ ${dialogueLine}
         sceneStoryKhmer: isKhmerPrompt ? actionDesc : '',
         aiVideoPrompt: aiPrompt,
         visual_prompt: aiPrompt,
+        flow_ai_prompt: fallbackFlowAi,
         dialogue: isWithDialogue ? spokenDialogue : '[SILENT SCENE - NO DIALOGUE]',
         voiceover: actionDesc,
         cameraMotion,
-        continuityNotes: isKhmerPrompt
-          ? `រក្សាតួអង្គ ${charDesc} ទាំងសម្លៀកបំពាក់ ម៉ូតសក់ និងលក្ខណៈសម្គាល់ដដែល ១០០%។ (${isWithDialogue ? `និយាយ${sLang.nameKhmer}` : 'គ្មានការនិយាយ'})`
-          : `Lock character ${charDesc} identical clothing, hair, and seamless continuity from previous shot. (${isWithDialogue ? `Spoken in ${sLang.nameEnglish}` : 'Silent Scene'})`
+        continuityNotes: continuityText
       });
     }
 
@@ -2744,12 +2735,16 @@ ${dialogueLine}
         throw new Error('មានបញ្ហាក្នុងការបង្កើត prompt');
       }
 
-      const data: StoryResult = await response.json();
+      const data: StoryResult & { isFallback?: boolean } = await response.json();
       setResult(data);
       saveStoryToHistory(data);
       setSelectedSceneFilter(1);
       setActiveTab('results');
-      showToast(`🎉 បានបង្កើត AI Video Prompts (${data.totalScenes} ឈុត) រួចរាល់!`);
+      if (data.isFallback) {
+        showToast(`⚡ បានបង្កើត AI Video Prompts (${data.totalScenes} ឈុត) ដោយជោគជ័យ!`);
+      } else {
+        showToast(`🎉 បានបង្កើត AI Video Prompts (${data.totalScenes} ឈុត) រួចរាល់!`);
+      }
     } catch (err: unknown) {
       console.warn('Backend call fallback to smart generator:', err);
       // Seamlessly generate structured fallback so user is never blocked
@@ -2758,7 +2753,7 @@ ${dialogueLine}
       saveStoryToHistory(fallbackData);
       setSelectedSceneFilter(1);
       setActiveTab('results');
-      showToast(`🎉 បានបង្កើត AI Video Prompts (${fallbackData.totalScenes} ឈុត) រួចរាល់!`);
+      showToast(`⚡ បានបង្កើត AI Video Prompts (${fallbackData.totalScenes} ឈុត) រួចរាល់!`);
     } finally {
       setIsLoading(false);
     }
@@ -2784,6 +2779,68 @@ ${dialogueLine}
       }, 2200);
     } catch (err) {
       console.error('Failed to copy', err);
+    }
+  };
+
+  const handleCopyFlowAiPrompt = async (scene: Scene, index: number) => {
+    const isKhmerPrompt = getLanguageById(promptLanguage).id === 'khmer';
+    let promptToCopy = scene.flow_ai_prompt || cleanRawPromptForFlowAi(scene.aiVideoPrompt, result?.style || visualStyle, characters, isKhmerPrompt);
+    if (scene.dialogue && scene.dialogue !== '[SILENT SCENE - NO DIALOGUE]' && !scene.dialogue.includes('SILENT')) {
+      const cleanDiag = scene.dialogue.replace(/^[«"'“\s]+|[»"'”\s]+$/g, '').trim();
+      if (cleanDiag && !promptToCopy.includes(cleanDiag)) {
+        if (isKhmerPrompt) {
+          promptToCopy += ` តួអង្គនិយាយដោយទឹកមុខរស់រវើក និងចលនាបបូរមាត់ត្រូវគ្នា៖ «${cleanDiag}»។`;
+        } else {
+          promptToCopy += ` The character speaks with natural emotion and synchronized lip movements: "${cleanDiag}".`;
+        }
+      }
+    }
+    promptToCopy = promptToCopy.replace(/\s+/g, ' ').trim();
+
+    try {
+      await navigator.clipboard.writeText(promptToCopy);
+      setCopiedFlowAiIndex(index);
+      setCopiedIndex(index);
+      setCopiedPromptIndex(index);
+      const sceneNum = scene.sceneNumber || index + 1;
+      showToast(`⚡ បានចម្លង Flow AI Prompt ឈុតទី ${sceneNum} (Error-Free) រួចរាល់!`);
+      setTimeout(() => {
+        setCopiedFlowAiIndex(null);
+        setCopiedIndex(null);
+        setCopiedPromptIndex(null);
+      }, 2200);
+    } catch (err) {
+      console.error('Failed to copy Flow AI prompt', err);
+    }
+  };
+
+  const handleCopyAllFlowAi = async () => {
+    if (!result) return;
+    const isKhmerPrompt = getLanguageById(promptLanguage).id === 'khmer';
+    const allFlowText = result.scenes
+      .map((s) => {
+        let p = s.flow_ai_prompt || cleanRawPromptForFlowAi(s.aiVideoPrompt, result.style || visualStyle, characters, isKhmerPrompt);
+        if (s.dialogue && s.dialogue !== '[SILENT SCENE - NO DIALOGUE]' && !s.dialogue.includes('SILENT')) {
+          const cleanDiag = s.dialogue.replace(/^[«"'“\s]+|[»"'”\s]+$/g, '').trim();
+          if (cleanDiag && !p.includes(cleanDiag)) {
+            if (isKhmerPrompt) {
+              p += ` តួអង្គនិយាយដោយទឹកមុខរស់រវើក និងចលនាបបូរមាត់ត្រូវគ្នា៖ «${cleanDiag}»។`;
+            } else {
+              p += ` The character speaks with natural emotion and synchronized lip movements: "${cleanDiag}".`;
+            }
+          }
+        }
+        return `// Shot ${s.sceneNumber} (${s.timeRange}):\n${p.replace(/\s+/g, ' ').trim()}`;
+      })
+      .join('\n\n');
+
+    try {
+      await navigator.clipboard.writeText(allFlowText);
+      setCopiedAllFlowAi(true);
+      showToast(`⚡ បានចម្លង Flow AI Prompts គ្រប់ឈុត (${result.scenes.length} ឈុត - Error-Free) រួចរាល់!`);
+      setTimeout(() => setCopiedAllFlowAi(false), 2200);
+    } catch (err) {
+      console.error('Failed to copy all Flow AI prompts', err);
     }
   };
 
@@ -2820,20 +2877,18 @@ ${dialogueLine}
   const handleCopyAll = async () => {
     if (!result) return;
     const fullText = result.scenes
-      .map(
-        (s) =>
-          `=== [Shot ${s.sceneNumber} (${s.timeRange}): ${s.sceneTitleKhmer}] ===\n` +
-          (s.sceneStoryKhmer ? `📖 ដំណើររឿង៖ ${s.sceneStoryKhmer}\n` : '') +
-          `🤖 ALL-IN-ONE MASTER PROMPT:\n${s.aiVideoPrompt}\n` +
-          `🎥 Camera Motion: ${s.cameraMotion}\n` +
-          `🛡️ Continuity Lock: ${s.continuityNotes}\n`
-      )
-      .join('\n----------------------------------------\n\n');
+      .map((s) => {
+        const prompt = promptFormatMode === 'flow_ai'
+          ? (s.flow_ai_prompt || cleanRawPromptForFlowAi(s.aiVideoPrompt, result.style || visualStyle, characters))
+          : s.aiVideoPrompt;
+        return `// Shot ${s.sceneNumber} (${s.timeRange}): ${s.sceneTitleKhmer}\n${prompt}`;
+      })
+      .join('\n\n----------------------------------------\n\n');
 
     try {
       await navigator.clipboard.writeText(fullText);
       setCopiedAll(true);
-      showToast(`🎉 បានចម្លង Prompt ទាំងអស់ (${result.scenes.length} ឈុត) ចូល Clipboard!`);
+      showToast(`🎉 បានចម្លង All-in-One Prompt គ្រប់ឈុត (${result.scenes.length} ឈុត) រួចរាល់!`);
       setTimeout(() => setCopiedAll(false), 2200);
     } catch (err) {
       console.error('Failed to copy all', err);
@@ -3904,10 +3959,10 @@ ${dialogueLine}
                 <div className="p-2.5 rounded-lg border bg-black/5 dark:bg-white/5 space-y-1">
                   <div className="font-bold flex items-center gap-1.5">
                     <span className="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px]">1</span>
-                    <span>ចម្លង Prompt មួយៗ</span>
+                    <span>ចម្លង Flow AI (គ្មាន Error)</span>
                   </div>
                   <p className="opacity-80 leading-relaxed text-[11px]">
-                    ចុចប៊ូតុង <strong>«ចម្លង Prompt នេះ»</strong> នៅលើឈុតទី ១ រួចបន្តទៅឈុតទី ២ តាមលំដាប់លំដោយ។
+                    ចុចប៊ូតុង <strong>«⚡ ចម្លង Flow AI»</strong> (Single Cinematic Paragraph) សម្រាប់យកទៅប្រើលើ Flow AI, Kling, Runway ដោយមិនចេញ Error។
                   </p>
                 </div>
                 <div className="p-2.5 rounded-lg border bg-black/5 dark:bg-white/5 space-y-1">
@@ -3916,7 +3971,7 @@ ${dialogueLine}
                     <span>ដាក់ចូល Generator</span>
                   </div>
                   <p className="opacity-80 leading-relaxed text-[11px]">
-                    បិទភ្ជាប់ (Paste) ចូលទៅកាន់កម្មវិធីបង្កើតវីដេអូ AI (AI Video Generator)។
+                    បិទភ្ជាប់ (Paste) ចូលទៅកាន់ប្រអប់ Prompt នៃ Flow AI ឬ AI Video Generator ណាមួយ។
                   </p>
                 </div>
                 <div className="p-2.5 rounded-lg border bg-black/5 dark:bg-white/5 space-y-1">
@@ -3987,59 +4042,19 @@ ${dialogueLine}
             </div>
           )}
 
-          {/* Results Display */}
+          {/* Results Display - Pure Prompt Shot Only */}
           {!isLoading && result && (
-            <div className="space-y-5">
-              {/* Continuity & Story Summary Banner */}
+            <div className="space-y-4">
+              {/* Compact Shot Navigation Bar & Quick Batch Copy */}
               <div
                 style={{
                   backgroundColor: activeTheme.resultBoxBg,
                   borderColor: activeTheme.resultBorder,
-                  color: activeTheme.resultText,
                 }}
-                className="border-2 rounded-xl p-4 shadow-sm space-y-3"
+                className="p-2 sm:p-2.5 rounded-2xl border flex items-center justify-between gap-2 overflow-x-auto shadow-xs"
               >
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                  <div className="flex items-start gap-3">
-                    <div
-                      style={{ backgroundColor: activeTheme.accent }}
-                      className="p-2.5 text-white rounded-xl shrink-0 shadow-sm"
-                    >
-                      <Film className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-bold text-base md:text-lg" style={{ color: activeTheme.resultText }}>
-                          🎬 {result.storyTitle}
-                        </h3>
-                        <span
-                          style={{
-                            backgroundColor: `${activeTheme.accent}20`,
-                            color: activeTheme.resultText,
-                            borderColor: activeTheme.resultBorder,
-                          }}
-                          className="text-xs font-bold px-2.5 py-0.5 rounded-full border"
-                        >
-                          {result.totalScenes} ឈុតសរុប
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs opacity-85">
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5" style={{ color: activeTheme.accent }} />
-                          <span>១ ឈុត = {durationPerPrompt} វិនាទី</span>
-                        </span>
-                        <span>•</span>
-                        <span>រយៈពេលសរុប {activeDuration} វិនាទី</span>
-                        <span>•</span>
-                        <span>ស្ទីល៖ {result.style}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Shots Selector: Only shows the count of shots and shot pills */}
-                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-2 text-xs flex-nowrap whitespace-nowrap">
-                  <span className="text-xs font-bold shrink-0 flex items-center gap-1" style={{ color: activeTheme.accent }}>
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs flex-nowrap whitespace-nowrap">
+                  <span className="text-xs font-bold shrink-0 flex items-center gap-1 pl-1" style={{ color: activeTheme.accent }}>
                     <span>Shots ({result.scenes.length})៖</span>
                   </span>
                   <div className="h-4 w-px bg-black/15 dark:bg-white/15 mx-0.5 shrink-0" />
@@ -4055,8 +4070,8 @@ ${dialogueLine}
                           color: isSelected ? getContrastColor(activeTheme.accent) : activeTheme.resultText,
                           borderColor: activeTheme.resultBorder,
                         }}
-                        className={`px-3 py-1.5 rounded-lg border font-bold text-xs transition cursor-pointer shadow-xs shrink-0 flex items-center gap-1 ${
-                          isSelected ? 'ring-2 ring-white/30 scale-[1.04]' : 'hover:opacity-90'
+                        className={`px-3 py-1.5 rounded-xl border font-bold text-xs transition cursor-pointer shadow-xs shrink-0 flex items-center gap-1 ${
+                          isSelected ? 'ring-2 ring-white/30 scale-[1.03]' : 'hover:opacity-90'
                         }`}
                       >
                         Shot {s.sceneNumber}
@@ -4064,15 +4079,48 @@ ${dialogueLine}
                     );
                   })}
                 </div>
+
+                {/* Batch Copy All Shots */}
+                <button
+                  type="button"
+                  onClick={handleCopyAllFlowAi}
+                  className="shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer bg-gradient-to-r from-emerald-600 to-teal-600 hover:brightness-110 active:scale-95 text-white shadow-sm border border-emerald-400/30"
+                  title="ចម្លងគ្រប់ឈុត (All Shots)"
+                >
+                  {copiedAllFlowAi ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 animate-bounce" />
+                      <span>បានចម្លងគ្រប់ឈុត!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5 text-amber-300" />
+                      <span>📋 ចម្លងគ្រប់ឈុត</span>
+                    </>
+                  )}
+                </button>
               </div>
 
-              {/* Detailed View: Showing only the selected Shot's full unified prompt without extra clutter */}
+              {/* Prompt Shot Display: Pure, Clean, Combined Action + Dialogue in One Single Paragraph */}
               <div className="space-y-4">
                   {result.scenes
                     .filter((s) => s.sceneNumber === (typeof selectedSceneFilter === 'number' ? selectedSceneFilter : 1))
                     .map((scene) => {
                       const sceneIndex = scene.sceneNumber - 1;
-                      const isPromptCopied = copiedPromptIndex === sceneIndex || copiedIndex === sceneIndex;
+                      const isFlowCopied = copiedFlowAiIndex === sceneIndex || copiedPromptIndex === sceneIndex || copiedIndex === sceneIndex;
+                      const isKhmerPrompt = getLanguageById(promptLanguage).id === 'khmer';
+                      let flowAiText = scene.flow_ai_prompt || cleanRawPromptForFlowAi(scene.aiVideoPrompt, result.style, characters, isKhmerPrompt);
+                      if (scene.dialogue && scene.dialogue !== '[SILENT SCENE - NO DIALOGUE]' && !scene.dialogue.includes('SILENT')) {
+                        const cleanDiag = scene.dialogue.replace(/^[«"'“\s]+|[»"'”\s]+$/g, '').trim();
+                        if (cleanDiag && !flowAiText.includes(cleanDiag)) {
+                          if (isKhmerPrompt) {
+                            flowAiText += ` តួអង្គនិយាយដោយទឹកមុខរស់រវើក និងចលនាបបូរមាត់ត្រូវគ្នា៖ «${cleanDiag}»។`;
+                          } else {
+                            flowAiText += ` The character speaks with natural emotion and synchronized lip movements: "${cleanDiag}".`;
+                          }
+                        }
+                      }
+                      flowAiText = flowAiText.replace(/\s+/g, ' ').trim();
 
                       return (
                         <article
@@ -4085,7 +4133,7 @@ ${dialogueLine}
                           }}
                           className="rounded-2xl border-2 transition-all shadow-md overflow-hidden"
                         >
-                          {/* Card Header with Single Prominent Copy Button */}
+                          {/* Card Header with Single Unified Copy Button */}
                           <div
                             style={{
                               backgroundColor: activeTheme.resultBoxBg,
@@ -4115,93 +4163,57 @@ ${dialogueLine}
                               </div>
                             </div>
 
-                            {/* PRIMARY COPY BUTTON */}
+                            {/* 1-Click All-in-One Copy Button */}
                             <button
                               type="button"
-                              onClick={() => handleCopyPrompt(scene.aiVideoPrompt, sceneIndex)}
-                              style={{
-                                backgroundColor: isPromptCopied ? '#059669' : activeTheme.accent,
-                                color: isPromptCopied ? '#ffffff' : getContrastColor(activeTheme.accent),
-                              }}
-                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer hover:brightness-110 active:scale-95 border border-white/20"
-                              title="ចម្លង Prompt ពេញលេញ (Copy Full Prompt)"
+                              onClick={() => handleCopyFlowAiPrompt(scene, sceneIndex)}
+                              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-md cursor-pointer bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:brightness-110 active:scale-95 text-white border border-emerald-400/50"
+                              title="ចម្លង Prompt ឈុតនេះ (រួមបញ្ចូលទាំងដំណើររឿង និងពាក្យនិយាយ)"
                             >
-                              {isPromptCopied ? (
+                              {isFlowCopied ? (
                                 <>
-                                  <Check className="w-4 h-4 animate-bounce" />
-                                  <span>បានចម្លងរួចរាល់! (Copied)</span>
+                                  <Check className="w-4 h-4 animate-bounce text-white" />
+                                  <span>បានចម្លងរួចរាល់!</span>
                                 </>
                               ) : (
                                 <>
-                                  <Copy className="w-4 h-4" />
-                                  <span>ចម្លង Prompt នេះ (Copy)</span>
+                                  <Copy className="w-4 h-4 text-amber-300" />
+                                  <span>📋 ចម្លង Prompt ឈុតទី {scene.sceneNumber}</span>
                                 </>
                               )}
                             </button>
                           </div>
 
-                          {/* Card Body: The Single Full Prompt Ready for Direct Copying */}
+                          {/* Card Body: Pure Combined Prompt Shot (No Split Boxes) */}
                           <div className="p-4 space-y-3">
-                            {/* Contextual Dialogue & Speech Banner */}
-                            {scene.dialogue && scene.dialogue !== '[SILENT SCENE - NO DIALOGUE]' && (
-                              <div
-                                style={{
-                                  backgroundColor: activeTheme.resultBoxBg,
-                                  borderColor: activeTheme.resultBorder,
-                                }}
-                                className="p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-xs"
-                              >
-                                <div className="space-y-1">
-                                  <div className="flex items-center gap-1.5 text-xs font-bold" style={{ color: activeTheme.accent }}>
-                                    <span>💬</span>
-                                    <span>ពាក្យនិយាយជាក់លាក់ក្នុងឈុតនេះ (Contextual Dialogue)៖</span>
-                                  </div>
-                                  <p className="text-xs md:text-sm font-semibold tracking-wide italic leading-relaxed" style={{ color: activeTheme.resultText }}>
-                                    {scene.dialogue}
-                                  </p>
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(scene.dialogue || '');
-                                    showToast(`💬 បានចម្លងពាក្យនិយាយ Shot ${scene.sceneNumber} រួចរាល់!`);
-                                  }}
-                                  style={{
-                                    backgroundColor: `${activeTheme.accent}15`,
-                                    color: activeTheme.accent,
-                                    borderColor: activeTheme.resultBorder,
-                                  }}
-                                  className="shrink-0 self-start sm:self-center px-3 py-1.5 rounded-lg border text-xs font-bold transition hover:opacity-85 flex items-center gap-1.5 cursor-pointer shadow-xs"
-                                  title="ចម្លងពាក្យនិយាយ"
-                                >
-                                  <Copy className="w-3.5 h-3.5" />
-                                  <span>ចម្លងពាក្យនិយាយ</span>
-                                </button>
-                              </div>
-                            )}
-                            {scene.dialogue === '[SILENT SCENE - NO DIALOGUE]' && (
-                              <div
-                                style={{
-                                  backgroundColor: activeTheme.resultBoxBg,
-                                  borderColor: activeTheme.resultBorder,
-                                }}
-                                className="p-3 rounded-xl border flex items-center gap-2 text-xs opacity-85 shadow-xs"
-                              >
-                                <span className="text-base">🔇</span>
-                                <div>
-                                  <span className="font-bold text-xs">ឈុតស្ងប់ស្ងាត់គ្មានការនិយាយ (Silent Scene)៖ </span>
-                                  <span className="opacity-90">សាច់រឿងដំណើរការតាមរយៈក្រសែភ្នែក ទឹកមុខ កាយវិការ និងសកម្មភាពសុទ្ធ។</span>
-                                </div>
+                            {/* Contextual Spoken Dialogue for this Scene */}
+                            {scene.dialogue && scene.dialogue !== '[SILENT SCENE - NO DIALOGUE]' && !scene.dialogue.includes('SILENT') && (
+                              <div className="flex items-start sm:items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs shadow-xs">
+                                <span className="font-bold text-amber-400 shrink-0 flex items-center gap-1.5">
+                                  <span>💬</span>
+                                  <span>ពាក្យនិយាយក្នុងឈុតនេះ៖</span>
+                                </span>
+                                <span className="italic font-bold text-amber-100 select-all leading-relaxed">
+                                  {scene.dialogue}
+                                </span>
                               </div>
                             )}
 
-                            <pre 
-                              onClick={() => handleCopyPrompt(scene.aiVideoPrompt, sceneIndex)}
-                              className="p-4 md:p-5 text-xs md:text-sm font-mono text-emerald-300 whitespace-pre-wrap leading-relaxed select-all bg-[#050a14] rounded-xl border border-slate-700/80 shadow-inner cursor-pointer hover:border-emerald-500/50 transition selection:bg-cyan-500 selection:text-black"
-                              title="ចុចលើ Prompt នេះដើម្បីចម្លង (Click to copy)"
-                            >
-                              {scene.aiVideoPrompt}
-                            </pre>
+                            <div className="relative group">
+                              <pre 
+                                onClick={() => handleCopyFlowAiPrompt(scene, sceneIndex)}
+                                className="p-4 md:p-5 text-xs md:text-sm font-mono whitespace-pre-wrap leading-relaxed select-all bg-[#050a14] text-cyan-300 rounded-xl border border-emerald-500/40 hover:border-emerald-400 shadow-inner cursor-pointer transition selection:bg-cyan-500 selection:text-black"
+                                title="ចុចលើប្រអប់នេះដើម្បីចម្លង Prompt ភ្លាមៗ"
+                              >
+                                {flowAiText}
+                              </pre>
+                              <div className="absolute top-3 right-3 opacity-80 group-hover:opacity-100 transition pointer-events-none">
+                                <span className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-emerald-950/90 text-emerald-300 border border-emerald-500/40 shadow-xs flex items-center gap-1.5">
+                                  <Copy className="w-3.5 h-3.5" />
+                                  <span>ចុចលើប្រអប់ដើម្បី Copy</span>
+                                </span>
+                              </div>
+                            </div>
 
                             {/* Shot Step Navigation & Quick Copy */}
                             <div className="pt-2 flex flex-wrap items-center justify-between gap-2.5 text-xs">
@@ -4241,22 +4253,19 @@ ${dialogueLine}
 
                               <button
                                 type="button"
-                                onClick={() => handleCopyPrompt(scene.aiVideoPrompt, sceneIndex)}
-                                style={{
-                                  backgroundColor: isPromptCopied ? '#059669' : activeTheme.accent,
-                                  color: isPromptCopied ? '#ffffff' : getContrastColor(activeTheme.accent),
-                                }}
-                                className="px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm hover:opacity-90"
+                                onClick={() => handleCopyFlowAiPrompt(scene, sceneIndex)}
+                                className="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow-sm bg-gradient-to-r from-emerald-600 to-teal-600 hover:brightness-110 active:scale-95 text-white border border-emerald-400/40"
+                                title="ចម្លង Prompt ឈុតនេះ"
                               >
-                                {isPromptCopied ? (
+                                {isFlowCopied ? (
                                   <>
-                                    <Check className="w-3.5 h-3.5" />
+                                    <Check className="w-4 h-4 animate-bounce text-white" />
                                     <span>បានចម្លងរួចរាល់!</span>
                                   </>
                                 ) : (
                                   <>
-                                    <Copy className="w-3.5 h-3.5" />
-                                    <span>ចម្លង Prompt (Shot {scene.sceneNumber})</span>
+                                    <Zap className="w-4 h-4 text-amber-300 fill-amber-300" />
+                                    <span>ចម្លង Prompt ឈុតទី {scene.sceneNumber}</span>
                                   </>
                                 )}
                               </button>
@@ -4267,6 +4276,7 @@ ${dialogueLine}
                     })}
                 </div>
 
+
               {/* Bottom Actions & All-copy button */}
               <div
                 style={{ borderColor: activeTheme.resultBorder }}
@@ -4275,7 +4285,17 @@ ${dialogueLine}
                 <span>
                   សរុប {result.scenes.length} Prompts អាចប្រើប្រាស់បានគ្រប់កម្មវិធី AI Video
                 </span>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleCopyAllFlowAi}
+                    className="font-bold hover:underline flex items-center gap-1.5 cursor-pointer text-emerald-400"
+                    title="ចម្លងគ្រប់ឈុតសម្រាប់ Flow AI គ្មាន Error"
+                  >
+                    <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
+                    <span>⚡ ចម្លង Flow AI ទាំងអស់ (Error-Free)</span>
+                  </button>
+                  <span>•</span>
                   <button
                     type="button"
                     onClick={handleDownloadTxt}
@@ -4293,7 +4313,7 @@ ${dialogueLine}
                     className="font-bold hover:underline flex items-center gap-1 cursor-pointer"
                   >
                     <Copy className="w-3.5 h-3.5" />
-                    <span>ចម្លង prompt ទាំងអស់ចូល clipboard</span>
+                    <span>ចម្លងបែបលម្អិតទាំងអស់</span>
                   </button>
                 </div>
               </div>
